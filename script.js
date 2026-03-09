@@ -811,20 +811,61 @@ const Warmup3D = (() => {
     // Game tab switching
     document.querySelectorAll('.game-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        if (gameRunning) stopGame();
+        // If game running, stop it silently (no modal) then switch
+        if (gameRunning) {
+          gameRunning = false;
+          mouseHeld = false;
+          clearInterval(autoFireInterval);
+          clearInterval(countdownInt);
+          if (animId) { cancelAnimationFrame(animId); animId = null; }
+          document.exitPointerLock();
+          crosshairEl.classList.remove('visible');
+          pointerPromptEl.classList.remove('visible');
+          timerEl.style.color = '';
+        }
+
         document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         gameMode = tab.dataset.game;
+
+        // Full reset of all HUD values
+        score = 0; hits = 0; shots = 0;
+        scoreEl.textContent    = '0';
+        timerEl.textContent    = document.getElementById('gameDuration').value || 30;
+        accEl.textContent      = '—';
+        timerEl.style.color    = '';
+        scoreLblEl.textContent = gameMode === 'tracking' ? 'On Target' : gameMode === 'switching' ? 'Damage' : 'Score';
+        bestEl.textContent     = bestScore[gameMode] ?? '—';
+
         updateOverlayTheme();
-        resetHUD();
+        showOverlay(true);
         buildScene();
         renderIdle();
         document.getElementById('tipText').textContent = TIPS[gameMode];
+
+        // Sync leaderboard tab to match game mode (use cache, no extra fetch)
+        if (typeof loadLeaderboard === 'function') loadLeaderboard(gameMode, false);
       });
     });
 
     startBtn.addEventListener('click', startGame);
-    document.getElementById('restartGame').addEventListener('click', () => { stopGame(); resetHUD(); buildScene(); renderIdle(); showOverlay(true); });
+    document.getElementById('restartGame').addEventListener('click', () => {
+      // Silent stop — no modal, just reset
+      gameRunning = false;
+      mouseHeld = false;
+      clearInterval(autoFireInterval);
+      clearInterval(countdownInt);
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      document.exitPointerLock();
+      crosshairEl.classList.remove('visible');
+      pointerPromptEl.classList.remove('visible');
+      timerEl.style.color = '';
+      score = 0; hits = 0; shots = 0;
+      resetHUD();
+      buildScene();
+      renderIdle();
+      showOverlay(true);
+    });
 
     // Fullscreen button
     const fsBtn = document.getElementById('fullscreenBtn');
@@ -1301,6 +1342,9 @@ const Warmup3D = (() => {
     crosshairEl.classList.remove('visible');
     pointerPromptEl.classList.remove('visible');
 
+    // Capture accuracy NOW before anything resets
+    const acc = shots > 0 ? `${Math.round((hits/shots)*100)}%` : '—';
+
     // Update session best
     if (bestScore[gameMode] === null || score > bestScore[gameMode]) {
       bestScore[gameMode] = score;
@@ -1308,8 +1352,8 @@ const Warmup3D = (() => {
     bestEl.textContent = bestScore[gameMode] ?? '—';
     timerEl.style.color = '';
 
-    // Show name prompt to save to leaderboard
-    showNameModal(gameMode, score);
+    // Show name prompt — pass captured acc so it survives mode switches
+    showNameModal(gameMode, score, acc);
   }
 
   function resetHUD(duration) {
@@ -1370,20 +1414,21 @@ const Warmup3D = (() => {
    ═══════════════════════════════════════════════════════════════ */
 let lbCurrentMode = 'tracking';
 
-function showNameModal(mode, finalScore) {
+function showNameModal(mode, finalScore, acc) {
   const bg    = document.getElementById('nameModalBg');
   const badge = document.getElementById('nmBadge');
   const sc    = document.getElementById('nmScore');
   const input = document.getElementById('nmNameInput');
-  if (!bg) { showEndOverlay(mode, finalScore); return; }
+  if (!bg) { Warmup3D._showEndOverlay(mode, finalScore, acc || '—'); return; }
 
   const BADGE = { tracking:'🎯 TRACKING', flicking:'⚡ FLICKING', switching:'🔀 SWITCHING' };
-  badge.textContent = BADGE[mode] || mode.toUpperCase();
-  badge.className   = 'nm-badge nm-badge-' + mode;
-  badge.dataset.mode = mode;
-  sc.textContent    = finalScore;
+  badge.textContent    = BADGE[mode] || mode.toUpperCase();
+  badge.className      = 'nm-badge nm-badge-' + mode;
+  badge.dataset.mode   = mode;
+  badge.dataset.score  = finalScore;
+  badge.dataset.acc    = acc || '—';
+  sc.textContent       = finalScore;
 
-  // Pre-fill last used name
   const saved = localStorage.getItem('aimrivals_name') || '';
   input.value = saved;
 
@@ -1396,11 +1441,13 @@ function hideNameModal() {
   if (bg) bg.classList.remove('visible');
 }
 
-function showEndOverlay(mode, finalScore) {
-  // Show the 3D canvas overlay after modal is dismissed
-  const acc = (typeof shots !== 'undefined' && shots > 0)
-    ? `${Math.round((hits/shots)*100)}%` : '—';
-  Warmup3D._showEndOverlay(mode, finalScore, acc);
+function showEndOverlay(mode, finalScore, acc) {
+  // Read values stored on the badge element — immune to mode switches
+  const badge = document.getElementById('nmBadge');
+  const m     = mode      || badge?.dataset.mode  || 'tracking';
+  const s     = finalScore != null ? finalScore : parseInt(badge?.dataset.score || '0', 10);
+  const a     = acc       || badge?.dataset.acc   || '—';
+  Warmup3D._showEndOverlay(m, s, a);
 }
 
 function renderLeaderboard(entries) {
@@ -1427,9 +1474,8 @@ function escapeHtml(str) {
   );
 }
 
-async function loadLeaderboard(mode) {
+async function loadLeaderboard(mode, forceFetch = false) {
   lbCurrentMode = mode;
-  // Update tab UI
   document.querySelectorAll('.lb-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.lbmode === mode)
   );
@@ -1440,6 +1486,8 @@ async function loadLeaderboard(mode) {
     if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="lb-empty">Scores unavailable offline</td></tr>';
     return;
   }
+  // Always fetch fresh from network (not just cache) so reloads show real data
+  if (forceFetch) await Scores.load();
   const top = await Scores.getTop(mode, 10);
   renderLeaderboard(top);
 }
@@ -1447,7 +1495,7 @@ async function loadLeaderboard(mode) {
 function initLeaderboard() {
   // Tab switching
   document.querySelectorAll('.lb-tab').forEach(tab => {
-    tab.addEventListener('click', () => loadLeaderboard(tab.dataset.lbmode));
+    tab.addEventListener('click', () => loadLeaderboard(tab.dataset.lbmode, true));
   });
 
   // Submit button
@@ -1458,10 +1506,11 @@ function initLeaderboard() {
   if (!submitBtn) return;
 
   async function doSubmit() {
+    const badge = document.getElementById('nmBadge');
     const name  = (input?.value || '').trim() || 'Anonymous';
-    const score = parseInt(document.getElementById('nmScore')?.textContent || '0', 10);
-    const mode  = document.getElementById('nmBadge')?.dataset.mode ||
-                  lbCurrentMode;
+    const mode  = badge?.dataset.mode  || lbCurrentMode;
+    const score = parseInt(badge?.dataset.score || '0', 10);
+    const acc   = badge?.dataset.acc   || '—';
 
     localStorage.setItem('aimrivals_name', name);
     submitBtn.textContent = 'Saving…';
@@ -1477,7 +1526,7 @@ function initLeaderboard() {
     submitBtn.textContent = 'Saved ✓';
     setTimeout(() => {
       hideNameModal();
-      showEndOverlay(mode, score);
+      showEndOverlay(mode, score, acc);
       submitBtn.textContent = 'Save Score';
       submitBtn.disabled = false;
     }, 700);
@@ -1487,11 +1536,12 @@ function initLeaderboard() {
   input?.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
 
   skipBtn?.addEventListener('click', () => {
-    const score = parseInt(document.getElementById('nmScore')?.textContent || '0', 10);
     const badge = document.getElementById('nmBadge');
-    const mode  = badge?.dataset.mode || lbCurrentMode;
+    const mode  = badge?.dataset.mode  || lbCurrentMode;
+    const score = parseInt(badge?.dataset.score || '0', 10);
+    const acc   = badge?.dataset.acc   || '—';
     hideNameModal();
-    showEndOverlay(mode, score);
+    showEndOverlay(mode, score, acc);
   });
 
   // Click outside modal to skip
@@ -1499,9 +1549,9 @@ function initLeaderboard() {
     if (e.target === bg) skipBtn?.click();
   });
 
-  // Load initial leaderboard
+  // Load initial leaderboard — force network fetch so reload always shows real data
   if (typeof Scores !== 'undefined') {
-    Scores.load().then(() => loadLeaderboard('tracking'));
+    loadLeaderboard('tracking', true);
   }
 }
 
