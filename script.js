@@ -591,7 +591,7 @@ function initSensConverter() {
     const isToRivals   = toEl.value   === 'rivals';
 
     // Update labels + hint
-    if (fromLbl) fromLbl.textContent = isFromRivals ? 'Camera Sensitivity (% or raw)' : (fg?.sensLabel || 'Sensitivity');
+    if (fromLbl) fromLbl.textContent = isFromRivals ? 'Camera Sensitivity' : (fg?.sensLabel || 'Sensitivity');
     if (toLbl)   toLbl.textContent   = (tg?.label || 'Target') + ' Sensitivity';
     if (multRowEl) multRowEl.style.display = fg?.hasMultiplier ? 'flex' : 'none';
 
@@ -600,14 +600,14 @@ function initSensConverter() {
     if (pctHint) pctHint.style.display = isFromRivals ? 'flex' : 'none';
 
     // Update placeholder
-    sensEl.placeholder = isFromRivals ? 'e.g. 50 or 50%' : '0.064';
+    sensEl.placeholder = isFromRivals ? '0.5' : '0.5';
 
     const effectiveRaw = parseSensInput(sensEl.value, isFromRivals);
 
     if (!fg || !tg || isNaN(effectiveRaw) || isNaN(dpi) || dpi <= 0) {
       document.getElementById('sensOutput').textContent = '—';
       document.getElementById('sensNote').textContent   = isFromRivals
-        ? 'Enter % (e.g. 50 or 50%) or raw (e.g. 0.5)'
+        ? 'Enter Camera Sensitivity (e.g. 0.5)'
         : 'Enter your sensitivity and DPI above';
       if (dpiLbl) dpiLbl.textContent = 'at — DPI';
       if (dpiVal) dpiVal.textContent = '— DPI';
