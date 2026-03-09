@@ -471,6 +471,8 @@ function initSliders() {
   const displays = { tracking: document.getElementById('trackingVal'),    flicking: document.getElementById('flickingVal'),    switching: document.getElementById('switchingVal')    };
   const COLORS   = { tracking: '#f0c800', flicking: '#4a7fff', switching: '#c040ff' };
 
+  function fill(slider, type) {
+    slider.style.background = `linear-gradient(to right,${COLORS[type]} ${slider.value}%,rgba(255,255,255,0.07) ${slider.value}%)`;
   }
   Object.keys(sliders).forEach(t => fill(sliders[t], t));
 
@@ -589,7 +591,7 @@ function initSensConverter() {
     const isToRivals   = toEl.value   === 'rivals';
 
     // Update labels + hint
-    if (fromLbl) fromLbl.textContent = isFromRivals ? 'Camera Sensitivity (% or raw)' : (fg?.sensLabel || 'Sensitivity');
+    if (fromLbl) fromLbl.textContent = fg?.sensLabel || 'Sensitivity';
     if (toLbl)   toLbl.textContent   = (tg?.label || 'Target') + ' Sensitivity';
     if (multRowEl) multRowEl.style.display = fg?.hasMultiplier ? 'flex' : 'none';
 
@@ -598,15 +600,13 @@ function initSensConverter() {
     if (pctHint) pctHint.style.display = isFromRivals ? 'flex' : 'none';
 
     // Update placeholder
-    sensEl.placeholder = isFromRivals ? 'e.g. 50 or 50%' : '0.064';
+    sensEl.placeholder = '0.064';
 
     const effectiveRaw = parseSensInput(sensEl.value, isFromRivals);
 
     if (!fg || !tg || isNaN(effectiveRaw) || isNaN(dpi) || dpi <= 0) {
       document.getElementById('sensOutput').textContent = '—';
-      document.getElementById('sensNote').textContent   = isFromRivals
-        ? 'Enter % (e.g. 50 or 50%) or raw (e.g. 0.5)'
-        : 'Enter your sensitivity and DPI above';
+      document.getElementById('sensNote').textContent   = 'Enter your sensitivity and DPI above';
       if (dpiLbl) dpiLbl.textContent = 'at — DPI';
       if (dpiVal) dpiVal.textContent = '— DPI';
       document.getElementById('sensQuick').style.display = 'none';
