@@ -825,7 +825,27 @@ const Warmup3D = (() => {
 
     startBtn.addEventListener('click', startGame);
     document.getElementById('restartGame').addEventListener('click', () => { stopGame(); resetHUD(); buildScene(); renderIdle(); showOverlay(true); });
-    // Sensitivity — read from number input
+
+    // Fullscreen button
+    const fsBtn = document.getElementById('fullscreenBtn');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        const wrap = document.getElementById('canvasWrap');
+        if (!document.fullscreenElement) {
+          wrap.requestFullscreen().catch(() => {});
+          fsBtn.textContent = '⛶ Exit';
+        } else {
+          document.exitFullscreen();
+          fsBtn.textContent = '⛶ Fullscreen';
+        }
+      });
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) fsBtn.textContent = '⛶ Fullscreen';
+        setTimeout(() => Warmup3D.resize(), 60);
+      });
+    }
+
+    // Sensitivity input
     const sensInput = document.getElementById('gameSensitivity');
     if (sensInput) {
       mouseSens = parseFloat(sensInput.value) || 0.0022;
@@ -839,7 +859,11 @@ const Warmup3D = (() => {
     document.addEventListener('pointerlockchange', onPointerLockChange);
     document.addEventListener('mozpointerlockchange', onPointerLockChange);
     document.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('click', onCanvasClick);
+
+    // Use mousedown/mouseup for canvas — enables hold-to-fire in switching
+    canvas.addEventListener('mousedown', onCanvasMouseDown);
+    canvas.addEventListener('mouseup',   onCanvasMouseUp);
+    canvas.addEventListener('click',     onCanvasClick); // fallback for pointer-lock re-acquire
 
     renderIdle();
   }
@@ -1043,7 +1067,7 @@ const Warmup3D = (() => {
     }
   }
 
-  // ─── SWITCHING — targets have HP bars, no respawn, deplete permanently ───
+  // ─── SWITCHING — targets have HP bars, respawn after death, hold LMB to auto-fire ───
   const SWITCH_POSITIONS = [
     [-7,   2.8, -14],
     [-3.8, 1.4, -12],
@@ -1054,32 +1078,45 @@ const Warmup3D = (() => {
     [ 5.5, 0.5, -13],
   ];
 
-  // Health-bar canvas sprites rendered as textures above each target
-  let switchHealthBars = []; // { mesh, hp, maxHp, barMesh }
+  let switchHealthBars = [];
+  let mouseHeld        = false;   // tracks LMB held state
+  let autoFireInterval = null;    // interval for held fire in switching
 
   function makeHealthBarTexture(hp, maxHp) {
     const W = 128, H = 20;
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const c = cv.getContext('2d');
-    // Background
     c.fillStyle = 'rgba(0,0,0,0.6)';
     c.fillRect(0, 0, W, H);
-    // Bar fill
     const frac = Math.max(0, hp / maxHp);
     const barColor = frac > 0.6 ? '#22c55e' : frac > 0.3 ? '#f59e0b' : '#ef4444';
     c.fillStyle = barColor;
     c.fillRect(2, 4, Math.round((W - 4) * frac), H - 8);
-    // Border
     c.strokeStyle = 'rgba(255,255,255,0.25)';
     c.lineWidth = 1;
     c.strokeRect(2, 4, W - 4, H - 8);
-    const tex = new THREE.CanvasTexture(cv);
-    return tex;
+    return new THREE.CanvasTexture(cv);
+  }
+
+  function respawnTarget(mesh) {
+    mesh._hp    = mesh._maxHp;
+    mesh._dead  = false;
+    mesh.material.color.setHex(0xa855f7);
+    mesh.material.emissive.setHex(0x7c3aed);
+    mesh.material.emissiveIntensity = 0.8;
+    mesh.material.opacity = 1;
+    mesh.material.transparent = false;
+    if (mesh._glow)  mesh._glow.visible  = true;
+    if (mesh._light) mesh._light.visible = true;
+    mesh._barMesh.visible = true;
+    const tex = makeHealthBarTexture(mesh._maxHp, mesh._maxHp);
+    mesh._barMesh.material.map = tex;
+    mesh._barMesh.material.needsUpdate = true;
   }
 
   function buildSwitching() {
-    switchTargets   = [];
+    switchTargets    = [];
     switchHealthBars = [];
 
     const diff  = document.getElementById('gameDifficulty').value;
@@ -1087,24 +1124,20 @@ const Warmup3D = (() => {
     const maxHp = diff === 'easy' ? 5    : diff === 'hard' ? 15   : 10;
 
     SWITCH_POSITIONS.forEach((pos, i) => {
-      // Target sphere
       const geo = new THREE.SphereGeometry(R, 20, 20);
       const mat = new THREE.MeshStandardMaterial({
-        color:             0xa855f7,
-        emissive:          0x7c3aed,
-        emissiveIntensity: 0.8,
+        color: 0xa855f7, emissive: 0x7c3aed, emissiveIntensity: 0.8,
         roughness: 0.35, metalness: 0.3,
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(...pos);
-      mesh._switchIdx  = i;
-      mesh._hp         = maxHp;
-      mesh._maxHp      = maxHp;
-      mesh._dead       = false;
+      mesh._switchIdx = i;
+      mesh._hp        = maxHp;
+      mesh._maxHp     = maxHp;
+      mesh._dead      = false;
       scene.add(mesh);
       switchTargets.push(mesh);
 
-      // Glow shell (starts visible)
       const gGeo = new THREE.SphereGeometry(R * 1.7, 12, 12);
       const gMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.09, side: THREE.BackSide });
       const glow = new THREE.Mesh(gGeo, gMat);
@@ -1112,13 +1145,11 @@ const Warmup3D = (() => {
       mesh._glow = glow;
       scene.add(glow);
 
-      // Point light
       const pt = new THREE.PointLight(0xa855f7, 2.5, 8);
       pt.position.set(...pos);
       mesh._light = pt;
       scene.add(pt);
 
-      // Health bar sprite above target
       const tex    = makeHealthBarTexture(maxHp, maxHp);
       const barGeo = new THREE.PlaneGeometry(R * 3.5, R * 0.7);
       const barMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
@@ -1131,30 +1162,25 @@ const Warmup3D = (() => {
     });
   }
 
-  function onSwitchClick() {
-    if (!gameRunning || switchTargets.length === 0) return;
+  function onSwitchFire() {
+    if (!gameRunning || switchTargets.length === 0 || !pointerLocked) return;
     shots++;
     raycaster.setFromCamera(CENTER, camera);
-    // Only raycast alive targets
     const alive = switchTargets.filter(m => !m._dead);
-    if (alive.length === 0) return;
-
-    const intersects = raycaster.intersectObjects(alive);
+    const intersects = raycaster.intersectObjects(alive.length ? alive : switchTargets);
     if (intersects.length > 0) {
       const hit = intersects[0].object;
+      if (hit._dead) return;
       hits++;
       hit._hp -= 1;
 
-      // Update health bar texture
       const tex = makeHealthBarTexture(hit._hp, hit._maxHp);
       hit._barMesh.material.map = tex;
       hit._barMesh.material.needsUpdate = true;
 
-      // Color target by remaining HP
       const frac = hit._hp / hit._maxHp;
-      const r = Math.round(255 * (1 - frac)), g = Math.round(80 * frac);
-      hit.material.color.setRGB(r/255 * 0.7 + 0.15, g/255 * 0.5, frac > 0.5 ? 0.85 : 0.2);
-      hit.material.emissive.setRGB(r/255 * 0.3, g/255 * 0.2, frac > 0.5 ? 0.4 : 0.05);
+      hit.material.color.setRGB(0.15 + 0.55*(1-frac), 0.2*frac, frac > 0.5 ? 0.85 : 0.2);
+      hit.material.emissive.setRGB(0.3*(1-frac), 0.2*frac, frac > 0.5 ? 0.4 : 0.05);
 
       score++;
       scoreEl.textContent = score;
@@ -1162,36 +1188,59 @@ const Warmup3D = (() => {
       flashHitRing();
 
       if (hit._hp <= 0) {
-        // Target dead — grey out, remove glow/light
         hit._dead = true;
         hit.material.color.setHex(0x2a2a3a);
         hit.material.emissive.setHex(0x050508);
         hit.material.emissiveIntensity = 0.02;
-        hit.material.opacity = 0.4;
+        hit.material.opacity = 0.35;
         hit.material.transparent = true;
-        if (hit._glow)  { hit._glow.visible  = false; }
-        if (hit._light) { hit._light.visible  = false; }
+        if (hit._glow)  hit._glow.visible  = false;
+        if (hit._light) hit._light.visible  = false;
         hit._barMesh.visible = false;
-      }
 
-      // If all dead — end round early with a bonus
-      if (switchTargets.every(m => m._dead)) {
-        score += 5; // Bonus for clearing all
-        scoreEl.textContent = score;
-        stopGame();
+        // Respawn after a short delay (scaled by difficulty)
+        const diff = document.getElementById('gameDifficulty').value;
+        const delay = diff === 'easy' ? 1200 : diff === 'hard' ? 3000 : 2000;
+        setTimeout(() => {
+          if (gameRunning) respawnTarget(hit);
+        }, delay);
       }
+    } else {
+      // Miss — penalise accuracy only, no score deduction
     }
   }
 
-  // ── CANVAS CLICK HANDLER ──
+  // ── CANVAS CLICK + HOLD HANDLER ──
+  function onCanvasMouseDown(e) {
+    if (e.button !== 0) return;
+    if (!gameRunning) return;
+    if (!pointerLocked) { canvas.requestPointerLock(); return; }
+
+    if (gameMode === 'flicking')  onFlickClick();
+    if (gameMode === 'tracking')  { /* tracking is continuous via raycaster in update */ }
+    if (gameMode === 'switching') {
+      onSwitchFire();
+      // Start auto-fire at ~10 shots/sec while held
+      clearInterval(autoFireInterval);
+      mouseHeld = true;
+      autoFireInterval = setInterval(() => {
+        if (!mouseHeld || !gameRunning) { clearInterval(autoFireInterval); return; }
+        onSwitchFire();
+      }, 100);
+    }
+  }
+
+  function onCanvasMouseUp(e) {
+    if (e.button !== 0) return;
+    mouseHeld = false;
+    clearInterval(autoFireInterval);
+  }
+
+  // Legacy single-click handler kept for flicking (pointer lock re-acquire)
   function onCanvasClick() {
     if (!gameRunning) return;
-    if (!pointerLocked) {
-      canvas.requestPointerLock();
-      return;
-    }
-    if (gameMode === 'flicking')  onFlickClick();
-    if (gameMode === 'switching') onSwitchClick();
+    if (!pointerLocked) { canvas.requestPointerLock(); return; }
+    if (gameMode === 'flicking') onFlickClick();
   }
 
   // ── POINTER LOCK ──
@@ -1244,30 +1293,23 @@ const Warmup3D = (() => {
 
   function stopGame() {
     gameRunning = false;
+    mouseHeld = false;
+    clearInterval(autoFireInterval);
     clearInterval(countdownInt);
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     document.exitPointerLock();
     crosshairEl.classList.remove('visible');
     pointerPromptEl.classList.remove('visible');
 
-    // Update best
+    // Update session best
     if (bestScore[gameMode] === null || score > bestScore[gameMode]) {
       bestScore[gameMode] = score;
     }
     bestEl.textContent = bestScore[gameMode] ?? '—';
-
-    const acc = shots > 0 ? `${Math.round((hits/shots)*100)}%` : '—';
-
-    // Show end overlay
-    updateOverlayTheme();
-    titleEl.textContent  = 'ROUND OVER';
-    const modeMsg = gameMode === 'tracking' ? 'Tracked well!' : gameMode === 'switching' ? `Damage dealt: ${score}` : `Accuracy: ${acc}`;
-    subEl.textContent    = `Score: ${score}  ·  ${modeMsg}  ·  Best: ${bestScore[gameMode]}`;
-    startBtn.textContent = '▶ Play Again';
-    overlay.classList.remove('hidden');
-
-    // Reset timer color
     timerEl.style.color = '';
+
+    // Show name prompt to save to leaderboard
+    showNameModal(gameMode, score);
   }
 
   function resetHUD(duration) {
@@ -1311,12 +1353,159 @@ const Warmup3D = (() => {
 
   window.addEventListener('resize', resize);
 
-  return { init, resize };
+  function _showEndOverlay(mode, finalScore, acc) {
+    updateOverlayTheme();
+    titleEl.textContent  = 'ROUND OVER';
+    const modeMsg = mode === 'tracking' ? 'Tracked well!' : mode === 'switching' ? `Damage dealt: ${finalScore}` : `Accuracy: ${acc}`;
+    subEl.textContent    = `Score: ${finalScore}  ·  ${modeMsg}  ·  Best: ${bestScore[mode]}`;
+    startBtn.textContent = '▶ Play Again';
+    overlay.classList.remove('hidden');
+  }
+
+  return { init, resize, _showEndOverlay };
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   TOAST
+   LEADERBOARD
    ═══════════════════════════════════════════════════════════════ */
+let lbCurrentMode = 'tracking';
+
+function showNameModal(mode, finalScore) {
+  const bg    = document.getElementById('nameModalBg');
+  const badge = document.getElementById('nmBadge');
+  const sc    = document.getElementById('nmScore');
+  const input = document.getElementById('nmNameInput');
+  if (!bg) { showEndOverlay(mode, finalScore); return; }
+
+  const BADGE = { tracking:'🎯 TRACKING', flicking:'⚡ FLICKING', switching:'🔀 SWITCHING' };
+  badge.textContent = BADGE[mode] || mode.toUpperCase();
+  badge.className   = 'nm-badge nm-badge-' + mode;
+  badge.dataset.mode = mode;
+  sc.textContent    = finalScore;
+
+  // Pre-fill last used name
+  const saved = localStorage.getItem('aimrivals_name') || '';
+  input.value = saved;
+
+  bg.classList.add('visible');
+  setTimeout(() => input.focus(), 100);
+}
+
+function hideNameModal() {
+  const bg = document.getElementById('nameModalBg');
+  if (bg) bg.classList.remove('visible');
+}
+
+function showEndOverlay(mode, finalScore) {
+  // Show the 3D canvas overlay after modal is dismissed
+  const acc = (typeof shots !== 'undefined' && shots > 0)
+    ? `${Math.round((hits/shots)*100)}%` : '—';
+  Warmup3D._showEndOverlay(mode, finalScore, acc);
+}
+
+function renderLeaderboard(entries) {
+  const tbody = document.getElementById('lbTableBody');
+  if (!tbody) return;
+  if (!entries || entries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="lb-empty">No scores yet — be the first!</td></tr>';
+    return;
+  }
+  const MEDALS = ['🥇','🥈','🥉'];
+  tbody.innerHTML = entries.map((e, i) => `
+    <tr class="lb-row ${i < 3 ? 'lb-top' : ''}">
+      <td class="lb-rank-col">${MEDALS[i] || (i+1)}</td>
+      <td class="lb-name">${escapeHtml(e.name)}</td>
+      <td class="lb-score-col lb-score-val">${e.score}</td>
+      <td class="lb-date-col">${e.date || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+  );
+}
+
+async function loadLeaderboard(mode) {
+  lbCurrentMode = mode;
+  // Update tab UI
+  document.querySelectorAll('.lb-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.lbmode === mode)
+  );
+  const tbody = document.getElementById('lbTableBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="lb-loading">Loading…</td></tr>';
+
+  if (typeof Scores === 'undefined') {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="lb-empty">Scores unavailable offline</td></tr>';
+    return;
+  }
+  const top = await Scores.getTop(mode, 10);
+  renderLeaderboard(top);
+}
+
+function initLeaderboard() {
+  // Tab switching
+  document.querySelectorAll('.lb-tab').forEach(tab => {
+    tab.addEventListener('click', () => loadLeaderboard(tab.dataset.lbmode));
+  });
+
+  // Submit button
+  const submitBtn = document.getElementById('nmSubmit');
+  const skipBtn   = document.getElementById('nmSkip');
+  const input     = document.getElementById('nmNameInput');
+  const bg        = document.getElementById('nameModalBg');
+  if (!submitBtn) return;
+
+  async function doSubmit() {
+    const name  = (input?.value || '').trim() || 'Anonymous';
+    const score = parseInt(document.getElementById('nmScore')?.textContent || '0', 10);
+    const mode  = document.getElementById('nmBadge')?.dataset.mode ||
+                  lbCurrentMode;
+
+    localStorage.setItem('aimrivals_name', name);
+    submitBtn.textContent = 'Saving…';
+    submitBtn.disabled = true;
+
+    try {
+      if (typeof Scores !== 'undefined') {
+        await Scores.submit(mode, score, name);
+        await loadLeaderboard(mode);
+      }
+    } catch(e) { console.warn('Submit failed', e); }
+
+    submitBtn.textContent = 'Saved ✓';
+    setTimeout(() => {
+      hideNameModal();
+      showEndOverlay(mode, score);
+      submitBtn.textContent = 'Save Score';
+      submitBtn.disabled = false;
+    }, 700);
+  }
+
+  submitBtn.addEventListener('click', doSubmit);
+  input?.addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+
+  skipBtn?.addEventListener('click', () => {
+    const score = parseInt(document.getElementById('nmScore')?.textContent || '0', 10);
+    const badge = document.getElementById('nmBadge');
+    const mode  = badge?.dataset.mode || lbCurrentMode;
+    hideNameModal();
+    showEndOverlay(mode, score);
+  });
+
+  // Click outside modal to skip
+  bg?.addEventListener('click', e => {
+    if (e.target === bg) skipBtn?.click();
+  });
+
+  // Load initial leaderboard
+  if (typeof Scores !== 'undefined') {
+    Scores.load().then(() => loadLeaderboard('tracking'));
+  }
+}
+
+
 let _toastTimer;
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -1340,6 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSensConverter();
   initFOVConverter();
   renderPlaylist();
+  initLeaderboard();
 
   // Init 3D warmup only if Three.js loaded
   if (typeof THREE !== 'undefined') {

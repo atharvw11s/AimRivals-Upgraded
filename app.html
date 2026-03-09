@@ -305,6 +305,7 @@
               </select>
             </div>
             <button class="btn-restart" id="restartGame">↺ Restart</button>
+            <button class="btn-restart btn-fullscreen" id="fullscreenBtn">⛶ Fullscreen</button>
           </div>
         </div>
 
@@ -354,6 +355,51 @@
           <p class="tip-text" id="tipText">Keep your crosshair ahead of the target — predict its path rather than chasing it.</p>
         </div>
 
+        <!-- Leaderboard -->
+        <div class="leaderboard-wrap">
+          <div class="lb-header">
+            <div class="lb-title-row">
+              <h2 class="lb-title">🏆 Global Leaderboard</h2>
+              <div class="lb-mode-tabs">
+                <button class="lb-tab active" data-lbmode="tracking">Tracking</button>
+                <button class="lb-tab" data-lbmode="flicking">Flicking</button>
+                <button class="lb-tab" data-lbmode="switching">Switching</button>
+              </div>
+            </div>
+            <p class="lb-sub">Top scores across all players — saved permanently</p>
+          </div>
+          <div class="lb-body">
+            <table class="lb-table">
+              <thead>
+                <tr>
+                  <th class="lb-rank-col">#</th>
+                  <th>Player</th>
+                  <th class="lb-score-col">Score</th>
+                  <th class="lb-date-col">Date</th>
+                </tr>
+              </thead>
+              <tbody id="lbTableBody">
+                <tr><td colspan="4" class="lb-loading">Loading scores…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Name prompt modal (shown after a round) -->
+        <div class="name-modal-bg" id="nameModalBg">
+          <div class="name-modal">
+            <div class="nm-badge" id="nmBadge">🎯 TRACKING</div>
+            <h3 class="nm-title">Round Over!</h3>
+            <p class="nm-score">Score: <strong id="nmScore">0</strong></p>
+            <p class="nm-sub">Enter your name to save to the leaderboard</p>
+            <input type="text" id="nmNameInput" class="nm-input" placeholder="Your name…" maxlength="20" autocomplete="off">
+            <div class="nm-btns">
+              <button class="nm-btn nm-btn-submit" id="nmSubmit">Save Score</button>
+              <button class="nm-btn nm-btn-skip"   id="nmSkip">Skip</button>
+            </div>
+          </div>
+        </div>
+
         <footer class="app-footer">
           <div class="app-footer-inner">
             <span>Curated by <strong>PurplsXD</strong> · Voltaic S3/S5 · Aimlabs &amp; KovaaK's</span>
@@ -371,6 +417,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="scores.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
