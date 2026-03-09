@@ -259,29 +259,32 @@ const SCENARIO_DB = {
      Slider = 1.0 (default) → Rivals ≡ Arsenal
    ═══════════════════════════════════════════════════════════════ */
 const SENS_DB = {
-  rivals:  { label: 'Roblox Rivals',  yaw: 0.37503, sensLabel: 'Camera Sensitivity', hasMultiplier: true  },
-  arsenal: { label: 'Roblox Arsenal', yaw: 0.37503, sensLabel: 'Camera Sensitivity', hasMultiplier: false },
-  aimlabs: { label: 'Aimlabs',        yaw: 0.05,    sensLabel: 'Sensitivity',         hasMultiplier: false },
-  kovaaks: { label: "Kovaak's",       yaw: 0.022,   sensLabel: 'Sensitivity',         hasMultiplier: false },
+  rivals:  { label: 'Roblox Rivals',  yaw: 0.37503, sensLabel: 'Camera Sensitivity (%)', hasMultiplier: true,  sensScale: 0.01 },
+  arsenal: { label: 'Roblox Arsenal', yaw: 0.37503, sensLabel: 'Camera Sensitivity',     hasMultiplier: false, sensScale: 1    },
+  aimlabs: { label: 'Aimlabs',        yaw: 0.05,    sensLabel: 'Sensitivity',             hasMultiplier: false, sensScale: 1    },
+  kovaaks: { label: "Kovaak's",       yaw: 0.022,   sensLabel: 'Sensitivity',             hasMultiplier: false, sensScale: 1    },
 };
 
 /* ═══════════════════════════════════════════════════════════════
    FOV GAME CONSTANTS
    ─────────────────────────────────────────────────────────────
-   VERIFIED by user measurement:
-     Arsenal slider 70  → VFOV 70,  HFOV 102.447858  ✓ (formula matches exactly)
-     Rivals  slider 80  → VFOV 80,  HFOV 112.327252  ✓ (formula matches exactly)
-     Aimlabs default 70 → VFOV 70  (user confirmed: "VFOV 70, HFOV 102.45")
-     KovaaK's           → HFOV (standard: horizontal field of view)
+   Rivals uses a non-standard internal aspect of ~1.464352
+   (NOT the standard 16/9 = 1.7778).
+
+   VERIFIED by user ground truth:
+     Rivals  103 VFOV → Arsenal  92 VFOV  ✓  (with aspect 1.464352)
+     Arsenal  70 VFOV → HFOV 102.447858   ✓
+     Rivals   80 VFOV → Arsenal ~69.3°    ✓  (matches Arsenal default 70)
 
    type 'vertical'   = game FOV setting is Vertical FOV
    type 'horizontal' = game FOV setting is Horizontal FOV
+   aspect: internal aspect ratio used to convert VFOV↔HFOV for that game
    ═══════════════════════════════════════════════════════════════ */
 const FOV_DB = {
-  rivals:  { label: 'Roblox Rivals',  type: 'vertical',   default: 80,  range: [30, 120] },
-  arsenal: { label: 'Roblox Arsenal', type: 'vertical',   default: 70,  range: [30, 120] },
-  aimlabs: { label: 'Aimlabs',        type: 'vertical',   default: 70,  range: [1,  150] },
-  kovaaks: { label: "Kovaak's",       type: 'horizontal', default: 103, range: [60, 150] },
+  rivals:  { label: 'Roblox Rivals',  type: 'vertical',   default: 80,  range: [30, 120], aspect: 1.464352 },
+  arsenal: { label: 'Roblox Arsenal', type: 'vertical',   default: 70,  range: [30, 120], aspect: 16/9     },
+  aimlabs: { label: 'Aimlabs',        type: 'vertical',   default: 70,  range: [1,  150], aspect: 16/9     },
+  kovaaks: { label: "Kovaak's",       type: 'horizontal', default: 103, range: [60, 150], aspect: 16/9     },
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -580,28 +583,34 @@ function initSensConverter() {
     }
 
     const slider        = fg.hasMultiplier ? Math.max(0.01, parseFloat(multEl?.value) || 1.0) : 1.0;
-    const effectiveSens = sens * slider;
+    const effectiveSens = sens * (fg.sensScale ?? 1) * slider;
 
     // toSens preserves same physical feel at the entered DPI
     const cm360  = 914.4 / (800 * fg.yaw * effectiveSens); // reference cm/360 at 800 DPI
-    const toSens = 914.4 / (dpi  * tg.yaw * cm360);
+    const toSensRaw = 914.4 / (dpi * tg.yaw * cm360);
+    // If target game uses a scale (e.g. Rivals outputs %) convert back
+    const toSens = toSensRaw / (tg.sensScale ?? 1);
 
     document.getElementById('sensOutput').textContent = toSens.toFixed(5);
     if (dpiLbl) dpiLbl.textContent = `at ${dpi} DPI`;
     if (dpiVal) dpiVal.textContent = `${dpi} DPI`;
-    document.getElementById('sensNote').textContent   =
-      `${fg.label} ${sens}${slider !== 1.0 ? ' × ' + slider + ' slider' : ''} at 800 DPI`
-      + ` = ${tg.label} ${toSens.toFixed(5)} at ${dpi} DPI — same aim speed`;
+    const fromDisplay = `${sens}${fg.sensScale === 0.01 ? '%' : ''}`;
+    const toDisplay   = `${toSens.toFixed(5)}${tg.sensScale === 0.01 ? '%' : ''}`;
+    document.getElementById('sensNote').textContent =
+      `${fg.label} ${fromDisplay}${slider !== 1.0 ? ' × ' + slider + ' multiplier' : ''} at 800 DPI`
+      + ` = ${tg.label} ${toDisplay} at ${dpi} DPI — same aim speed`;
     document.getElementById('sensResult').classList.add('has-result');
 
     // Quick reference grid
     const sqGrid = document.getElementById('sqGrid');
     sqGrid.innerHTML = '';
     Object.values(SENS_DB).forEach(game => {
-      const eq = 914.4 / (dpi * game.yaw * cm360);
+      const eqRaw = 914.4 / (dpi * game.yaw * cm360);
+      const eq    = eqRaw / (game.sensScale ?? 1);
+      const suffix = game.sensScale === 0.01 ? '%' : '';
       const item = document.createElement('div');
       item.className = 'sq-item';
-      item.innerHTML = `<span class="sq-game">${game.label}</span><span class="sq-val">${eq.toFixed(5)}</span>`;
+      item.innerHTML = `<span class="sq-game">${game.label}</span><span class="sq-val">${eq.toFixed(5)}${suffix}</span>`;
       sqGrid.appendChild(item);
     });
     document.getElementById('sensQuick').style.display = 'block';
@@ -670,9 +679,9 @@ function initFOVConverter() {
     const fg     = FOV_DB[fromEl.value];
     const tg     = FOV_DB[toEl.value];
     const fov    = parseFloat(inEl.value);
-    const aspect = parseFloat(document.getElementById('fovAspect').value);
+    const userAspect = parseFloat(document.getElementById('fovAspect').value);
 
-    if (!fg || !tg || isNaN(fov) || fov <= 0 || fov >= 180 || isNaN(aspect)) {
+    if (!fg || !tg || isNaN(fov) || fov <= 0 || fov >= 180 || isNaN(userAspect)) {
       document.getElementById('fovOutput').textContent = 'Invalid';
       return;
     }
@@ -680,17 +689,22 @@ function initFOVConverter() {
     const toRad = d => d * Math.PI / 180;
     const toDeg = r => r * 180 / Math.PI;
 
-    // Normalize to HFOV radians
+    // Each game has its own internal aspect for VFOV<->HFOV conversion
+    // Rivals uses 1.464352 (empirically verified), others use 16/9
+    const fromAspect = fg.aspect || (16/9);
+    const toAspect   = tg.aspect || (16/9);
+
+    // Step 1: normalize input to HFOV radians using source game's aspect
     const hRad = fg.type === 'vertical'
-      ? 2 * Math.atan(Math.tan(toRad(fov) / 2) * aspect)
+      ? 2 * Math.atan(Math.tan(toRad(fov) / 2) * fromAspect)
       : toRad(fov);
 
-    // Convert to target type
+    // Step 2: convert HFOV radians to target game's FOV type using target aspect
     const out = tg.type === 'vertical'
-      ? toDeg(2 * Math.atan(Math.tan(hRad / 2) / aspect))
+      ? toDeg(2 * Math.atan(Math.tan(hRad / 2) / toAspect))
       : toDeg(hRad);
 
-    // Always compute HFOV for display (useful for KovaaK's reference)
+    // HFOV in standard 16:9 for display reference
     const hfovDeg = toDeg(hRad);
 
     document.getElementById('fovOutput').textContent = out.toFixed(2) + '°';
