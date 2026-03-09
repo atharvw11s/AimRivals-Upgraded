@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AimRivals — App</title>
   <meta name="description" content="Daily aim training routines, sensitivity converters, FOV calculators and 3D warmup games.">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Karla:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -161,10 +161,7 @@
               <div class="conv-inputs-row">
                 <div class="field-group">
                   <label class="field-label" id="sensFromLabel">Camera Sensitivity</label>
-                  <div class="sens-input-wrap">
-                    <input type="text" id="rivalsSens" class="field-input" placeholder="e.g. 50 or 50%">
-                    <span class="sens-pct-hint" id="sensPctHint" style="display:none">%</span>
-                  </div>
+                  <input type="text" id="rivalsSens" class="field-input" placeholder="e.g. 0.064">
                 </div>
                 <div class="field-group">
                   <label class="field-label">DPI</label>
@@ -172,8 +169,8 @@
                 </div>
               </div>
               <div class="field-group" id="sensMultiplierRow" style="display:none">
-                <label class="field-label">Rivals In-Game Slider <span style="font-size:10px;opacity:.5">(default 1.0)</span></label>
-                <input type="number" id="rivalsMultiplier" class="field-input" placeholder="1.0" step="0.01" min="0.01" max="10" value="1">
+                <label class="field-label">Rivals In-Game Slider <span style="font-size:10px;opacity:.5">(default 100%)</span></label>
+                <input type="text" id="rivalsMultiplier" class="field-input" placeholder="100%">
               </div>
               <div class="sens-result-box" id="sensResult">
                 <p class="sens-result-label" id="sensResultLabel">Calculated Sensitivity:</p>
@@ -346,6 +343,7 @@
               <div class="overlay-game-badge tracking" id="overlayBadge">🎯 TRACKING</div>
               <div class="overlay-title tracking-title" id="overlayTitle">READY?</div>
               <div class="overlay-sub" id="overlaySub">Click Begin to lock your cursor and start the round</div>
+              <div class="overlay-best" id="overlayBest" style="display:none">🏆 Personal Best: <span id="overlayBestVal">—</span></div>
               <button class="btn-begin tracking-btn" id="btnStartGame">▶ Begin Warmup</button>
             </div>
           </div>
@@ -419,7 +417,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="scores.js?v=7"></script>
-<script src="script.js?v=7"></script>
+<script src="scores.js?v=8"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>
