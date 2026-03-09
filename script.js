@@ -259,7 +259,7 @@ const SCENARIO_DB = {
      Slider = 1.0 (default) → Rivals ≡ Arsenal
    ═══════════════════════════════════════════════════════════════ */
 const SENS_DB = {
-  rivals:  { label: 'Roblox Rivals',  yaw: 0.37503, sensLabel: 'Camera Sensitivity (%)', hasMultiplier: true,  sensScale: 0.01 },
+  rivals:  { label: 'Roblox Rivals',  yaw: 0.37503, sensLabel: 'Camera Sensitivity', hasMultiplier: true,  sensScale: 0.01 },
   arsenal: { label: 'Roblox Arsenal', yaw: 0.37503, sensLabel: 'Camera Sensitivity',     hasMultiplier: false, sensScale: 1    },
   aimlabs: { label: 'Aimlabs',        yaw: 0.05,    sensLabel: 'Sensitivity',             hasMultiplier: false, sensScale: 1    },
   kovaaks: { label: "Kovaak's",       yaw: 0.022,   sensLabel: 'Sensitivity',             hasMultiplier: false, sensScale: 1    },
@@ -471,8 +471,6 @@ function initSliders() {
   const displays = { tracking: document.getElementById('trackingVal'),    flicking: document.getElementById('flickingVal'),    switching: document.getElementById('switchingVal')    };
   const COLORS   = { tracking: '#f0c800', flicking: '#4a7fff', switching: '#c040ff' };
 
-  function fill(slider, type) {
-    slider.style.background = `linear-gradient(to right,${COLORS[type]} ${slider.value}%,rgba(255,255,255,0.07) ${slider.value}%)`;
   }
   Object.keys(sliders).forEach(t => fill(sliders[t], t));
 
