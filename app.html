@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AimRivals — App</title>
   <meta name="description" content="Daily aim training routines, sensitivity converters, FOV calculators and 3D warmup games.">
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Karla:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -435,13 +435,13 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="scores.js?v=11"></script>
-<script src="script.js?v=11"></script>
+<script src="scores.js?v=12"></script>
+<script src="script.js?v=12"></script>
 
   <!-- Firebase Auth SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="auth.js?v=11"></script>
+  <script src="auth.js?v=12"></script>
 
   <!-- Auth Modal -->
   <div class="auth-modal-bg" id="authModalBg">
@@ -469,7 +469,11 @@
             <p class="auth-email" id="authUserEmail"></p>
           </div>
         </div>
-        <p class="auth-sub">Your personal bests are synced across all devices.</p>
+        <div class="auth-name-row">
+          <label class="auth-name-label">Display name</label>
+          <input type="text" id="authDisplayName" class="auth-name-input" placeholder="Your name…" maxlength="20" autocomplete="off">
+        </div>
+        <p class="auth-sub" style="margin-top:8px">Your personal bests are synced across all devices.</p>
         <button class="auth-btn auth-btn-signout" id="authSignOutBtn">Sign Out</button>
       </div>
     </div>

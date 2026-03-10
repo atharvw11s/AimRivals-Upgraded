@@ -1585,3 +1585,15 @@ main{position:relative;z-index:1}
 /* ── Overlay personal best ──────────────────────────────────────── */
 .overlay-best { font-size:13px; font-weight:600; color:var(--tx-3); margin-bottom:20px; opacity:.85; }
 .overlay-best span { color:var(--track-col); font-size:15px; font-weight:700; }
+
+/* ── Auth display name field ───────────────────────────────────── */
+.auth-name-row { text-align: left; margin-bottom: 4px; }
+.auth-name-label { font-family: var(--f-k); font-size: 11px; color: var(--tx-3); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 6px; }
+.auth-name-input {
+  width: 100%; padding: 9px 12px;
+  background: var(--bg-input, rgba(255,255,255,0.06));
+  border: 1px solid var(--bdr); border-radius: 8px;
+  font-family: var(--f-j); font-size: 14px; color: var(--tx);
+  box-sizing: border-box; outline: none; transition: border-color .2s;
+}
+.auth-name-input:focus { border-color: var(--accent); }
