@@ -7,22 +7,23 @@
 const Auth = (() => {
   'use strict';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDIECy6W98CGpksmL74wYRp4BJ--e6clx4",
-  authDomain: "aimrivals.firebaseapp.com",
-  databaseURL: "https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "aimrivals",
-  storageBucket: "aimrivals.firebasestorage.app",
-  messagingSenderId: "398111990265",
-  appId: "1:398111990265:web:b14c43e36b083d69469d28",
-  measurementId: "G-YL9Z24X1RE"
-};
+  const firebaseConfig = {
+    apiKey:            "AIzaSyDIECy6W98CGpksmL74wYRp4BJ--e6clx4",
+    authDomain:        "aimrivals.firebaseapp.com",
+    databaseURL:       "https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "aimrivals",
+    storageBucket:     "aimrivals.firebasestorage.app",
+    messagingSenderId: "398111990265",
+    appId:             "1:398111990265:web:b14c43e36b083d69469d28",
+    measurementId:     "G-YL9Z24X1RE"
+  };
 
-  const CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE');
+  const CONFIGURED = true;
 
   let auth        = null;
   let currentUser = null;
   let _modalOpen  = false;
+  let _popupOpen  = false;
 
   function init() {
     if (!CONFIGURED) {
@@ -34,10 +35,12 @@ const firebaseConfig = {
       if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       auth.onAuthStateChanged(user => {
+        const wasSignedOut = !currentUser;
         currentUser = user;
         _updateUI(user);
         if (user) {
-          // Use custom display name if set, else use provider name
+          // Close modal on successful sign-in
+          if (wasSignedOut) closeModal();
           const saved = localStorage.getItem('aimrivals_display_name');
           if (!saved) localStorage.setItem('aimrivals_display_name', user.displayName || user.email?.split('@')[0] || 'Player');
         }
@@ -59,12 +62,11 @@ const firebaseConfig = {
 
   async function signInGoogle() {
     if (!auth) return;
+    _popupOpen = true;
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      // Use redirect on mobile, popup on desktop
       await auth.signInWithPopup(provider);
-      // onAuthStateChanged handles UI — just close modal
-      closeModal();
+      _popupOpen = false;
     } catch(e) {
       if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
         console.warn('[Auth] Google sign-in failed:', e.message);
@@ -74,10 +76,11 @@ const firebaseConfig = {
 
   async function signInGitHub() {
     if (!auth) return;
+    _popupOpen = true;
     try {
       const provider = new firebase.auth.GithubAuthProvider();
       await auth.signInWithPopup(provider);
-      closeModal();
+      _popupOpen = false;
     } catch(e) {
       if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
         console.warn('[Auth] GitHub sign-in failed:', e.message);
@@ -168,7 +171,7 @@ const firebaseConfig = {
 
     // Backdrop click — only close if clicking the bg itself, not during popup
     document.getElementById('authModalBg')?.addEventListener('mousedown', e => {
-      if (e.target.id === 'authModalBg') closeModal();
+      if (e.target.id === 'authModalBg' && !_popupOpen) closeModal();
     });
     document.getElementById('authClose')     ?.addEventListener('click', closeModal);
     document.getElementById('authGoogleBtn') ?.addEventListener('click', signInGoogle);
