@@ -7,15 +7,16 @@
 const Auth = (() => {
   'use strict';
 
-  const firebaseConfig = {
-    apiKey:            "REPLACE_WITH_YOUR_API_KEY",
-    authDomain:        "REPLACE.firebaseapp.com",
-    databaseURL:       "https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:         "REPLACE",
-    storageBucket:     "REPLACE.appspot.com",
-    messagingSenderId: "REPLACE",
-    appId:             "REPLACE"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDIECy6W98CGpksmL74wYRp4BJ--e6clx4",
+  authDomain: "aimrivals.firebaseapp.com",
+  databaseURL: "https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "aimrivals",
+  storageBucket: "aimrivals.firebasestorage.app",
+  messagingSenderId: "398111990265",
+  appId: "1:398111990265:web:b14c43e36b083d69469d28",
+  measurementId: "G-YL9Z24X1RE"
+};
 
   const CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE');
 
