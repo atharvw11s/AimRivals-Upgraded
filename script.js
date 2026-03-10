@@ -551,89 +551,96 @@ function loadFromURL() {
    sensitivity gives the same feel at a different DPI.
    ═══════════════════════════════════════════════════════════════ */
 function initSensConverter() {
-  const fromEl     = document.getElementById('sensFrom');
-  const toEl       = document.getElementById('sensTo');
-  const sensEl     = document.getElementById('rivalsSens');
-  const dpiFromEl  = document.getElementById('mouseDPIFrom');
-  const dpiToEl    = document.getElementById('mouseDPITo');
-  const lockBtn    = document.getElementById('dpiLockBtn');
-  const multEl     = document.getElementById('rivalsMultiplier');
-  const multRowEl  = document.getElementById('sensMultiplierRow');
-  const fromLbl    = document.getElementById('sensFromLabel');
-  const toLbl      = document.getElementById('sensResultLabel');
-  const rivalsNote = document.getElementById('sensRivalsNote');
-
-  let dpiLocked = false;
-
-  if (lockBtn) {
-    lockBtn.addEventListener('click', () => {
-      dpiLocked = !dpiLocked;
-      lockBtn.classList.toggle('locked', dpiLocked);
-      if (dpiLocked && dpiToEl) dpiToEl.value = dpiFromEl.value;
-      recalc();
-    });
-  }
-  if (dpiFromEl) dpiFromEl.addEventListener('input', () => { if (dpiLocked && dpiToEl) dpiToEl.value = dpiFromEl.value; recalc(); });
-  if (dpiToEl)   dpiToEl.addEventListener('input',   () => { if (dpiLocked && dpiFromEl) dpiFromEl.value = dpiToEl.value; recalc(); });
+  const fromEl    = document.getElementById('sensFrom');
+  const toEl      = document.getElementById('sensTo');
+  const sensEl    = document.getElementById('rivalsSens');
+  const dpiEl     = document.getElementById('mouseDPI');
+  const multEl    = document.getElementById('rivalsMultiplier');
+  const multRowEl = document.getElementById('sensMultiplierRow');
+  const fromLbl   = document.getElementById('sensFromLabel');
+  const toLbl     = document.getElementById('sensResultLabel');
+  const dpiLbl    = document.getElementById('sensDpiLabel');
+  const dpiVal    = document.getElementById('sensDpiVal');
 
   function parseSensInput(raw, isRivals) {
     if (!raw) return NaN;
-    const str    = String(raw).trim();
+    const str = String(raw).trim();
     const hasPct = str.endsWith('%');
-    const num    = parseFloat(hasPct ? str.slice(0, -1) : str);
+    const num = parseFloat(hasPct ? str.slice(0, -1) : str);
     if (isNaN(num) || num <= 0) return NaN;
     if (!isRivals) return num;
+    // Rivals: raw value (e.g. 2) and % value (200%) are the same thing
+    // Raw input: treat as-is (e.g. 2 = 2 on the 0–100 slider scale internally)
+    // % input: strip the % (200% -> 200, same as typing 2? No: 200% = 2.0 raw)
+    // User said: "2 = 200%" so raw 2 = 200% -> effective = 2 (we multiply by 100 for display)
+    // hasPct: user typed "200%" -> parse 200 -> divide by 100 -> 2 (same)
     return hasPct ? num / 100 : num;
   }
 
   function formatSensOutput(raw, isRivals) {
-    // Rivals output = raw Camera Sensitivity value (no % — that's only the in-game slider)
-    if (isRivals) return raw.toFixed(5);
+    // raw is the real sens value; for Rivals display multiply by 100 to show %
+    if (isRivals) return (raw * 100).toFixed(2) + '%';
     return raw.toFixed(5);
   }
 
   function recalc() {
-    const fg           = SENS_DB[fromEl.value];
-    const tg           = SENS_DB[toEl.value];
-    const dpiFrom      = parseFloat(dpiFromEl?.value) || NaN;
-    const dpiTo        = parseFloat(dpiToEl?.value)   || NaN;
+    const fg   = SENS_DB[fromEl.value];
+    const tg   = SENS_DB[toEl.value];
+    const dpi  = parseFloat(dpiEl.value);
     const isFromRivals = fromEl.value === 'rivals';
     const isToRivals   = toEl.value   === 'rivals';
 
-    if (fromLbl) fromLbl.textContent = fg?.sensLabel || 'Sensitivity';
-    if (toLbl)   toLbl.textContent   = isToRivals ? 'Roblox Rivals Camera Sensitivity' : (tg?.label || 'Target') + ' Sensitivity';
+    // Update labels + hint
+    if (fromLbl) fromLbl.textContent = isFromRivals ? 'Camera Sensitivity (% or raw)' : (fg?.sensLabel || 'Sensitivity');
+    if (toLbl)   toLbl.textContent   = (tg?.label || 'Target') + ' Sensitivity';
     if (multRowEl) multRowEl.style.display = fg?.hasMultiplier ? 'flex' : 'none';
-    if (rivalsNote) rivalsNote.style.display = isToRivals ? 'block' : 'none';
 
-    sensEl.placeholder = isFromRivals ? 'e.g. 0.5' : 'e.g. 0.064';
+    // Show % hint badge on input when Rivals is source
+    const pctHint = document.getElementById('sensPctHint');
+    if (pctHint) pctHint.style.display = isFromRivals ? 'flex' : 'none';
+
+    // Update placeholder
+    sensEl.placeholder = isFromRivals ? 'e.g. 50 or 50%' : '0.064';
 
     const effectiveRaw = parseSensInput(sensEl.value, isFromRivals);
 
-    if (!fg || !tg || isNaN(effectiveRaw) || isNaN(dpiFrom) || dpiFrom <= 0 || isNaN(dpiTo) || dpiTo <= 0) {
+    if (!fg || !tg || isNaN(effectiveRaw) || isNaN(dpi) || dpi <= 0) {
       document.getElementById('sensOutput').textContent = '—';
-      document.getElementById('sensNote').textContent   = 'Enter your sensitivity and DPI above';
+      document.getElementById('sensNote').textContent   = isFromRivals
+        ? 'Enter % (e.g. 50 or 50%) or raw (e.g. 0.5)'
+        : 'Enter your sensitivity and DPI above';
+      if (dpiLbl) dpiLbl.textContent = 'at — DPI';
+      if (dpiVal) dpiVal.textContent = '— DPI';
       document.getElementById('sensQuick').style.display = 'none';
       return;
     }
 
-    const slider        = fg.hasMultiplier ? Math.max(0.01, parseFloat(multEl?.value) || 1.0) : 1.0;
+    const multRaw = multEl?.value ? String(multEl.value).trim() : '1';
+    const multNum = parseFloat(multRaw.endsWith('%') ? multRaw.slice(0,-1) / 100 : multRaw);
+    const slider  = fg.hasMultiplier ? Math.max(0.01, isNaN(multNum) ? 1.0 : multNum) : 1.0;
     const effectiveSens = effectiveRaw * slider;
 
-    const cm360     = 914.4 / (dpiFrom * fg.yaw * effectiveSens);
-    const toSensRaw = 914.4 / (dpiTo   * tg.yaw * cm360);
+    const cm360     = 914.4 / (800 * fg.yaw * effectiveSens);
+    const toSensRaw = 914.4 / (dpi  * tg.yaw * cm360);
     const toDisplay = formatSensOutput(toSensRaw, isToRivals);
 
     document.getElementById('sensOutput').textContent = toDisplay;
+    if (dpiLbl) dpiLbl.textContent = `at ${dpi} DPI`;
+    if (dpiVal) dpiVal.textContent = `${dpi} DPI`;
 
-    const fromDisplay = isFromRivals ? (effectiveRaw * 100).toFixed(2) + '%' : `${effectiveRaw}`;
+    const fromDisplay = isFromRivals
+      ? (effectiveRaw * 100).toFixed(2) + '%'
+      : `${effectiveRaw}`;
     document.getElementById('sensNote').textContent =
-      `${fg.label} ${fromDisplay} at ${dpiFrom} DPI = ${tg.label} ${toDisplay} at ${dpiTo} DPI — same aim speed`;
+      `${fg.label} ${fromDisplay}${slider !== 1.0 ? ' × ' + slider + ' multiplier' : ''} at 800 DPI`
+      + ` = ${tg.label} ${toDisplay} at ${dpi} DPI — same aim speed`;
     document.getElementById('sensResult').classList.add('has-result');
 
+    // Quick reference grid
     const sqGrid = document.getElementById('sqGrid');
     sqGrid.innerHTML = '';
     Object.entries(SENS_DB).forEach(([key, game]) => {
-      const eqRaw = 914.4 / (dpiTo * game.yaw * cm360);
+      const eqRaw = 914.4 / (dpi * game.yaw * cm360);
       const eq    = formatSensOutput(eqRaw, key === 'rivals');
       const item  = document.createElement('div');
       item.className = 'sq-item';
@@ -643,7 +650,8 @@ function initSensConverter() {
     document.getElementById('sensQuick').style.display = 'block';
   }
 
-  [fromEl, toEl, sensEl, multEl].forEach(el => {
+  // Live update — also re-run when source game changes (updates placeholder/hint)
+  [fromEl, toEl, sensEl, dpiEl, multEl].forEach(el => {
     if (el) { el.addEventListener('input', recalc); el.addEventListener('change', recalc); }
   });
 
@@ -652,11 +660,28 @@ function initSensConverter() {
     recalc();
   });
 
+  // Keep the calculate button working too for users who expect it
   const calcBtn = document.getElementById('convertSens');
   if (calcBtn) calcBtn.addEventListener('click', recalc);
 
-  recalc();
+  recalc(); // run once on load with defaults
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FOV CONVERTER
+   ─────────────────────────────────────────────────────────────
+   All conversions pipeline through HFOV radians:
+     VFOV → hfovRad = 2·atan(tan(toRad(VFOV)/2) · aspect)
+     HFOV → hfovRad = toRad(HFOV)
+     hfovRad → VFOV = toDeg(2·atan(tan(hfovRad/2) / aspect))
+     hfovRad → HFOV = toDeg(hfovRad)
+
+   Verified against user ground truth:
+     Arsenal  70 VFOV → HFOV 102.447858 ✓
+     Rivals   80 VFOV → HFOV 112.327252 ✓
+     Rivals   80 VFOV → Aimlabs 80 VFOV (same type = identity) ✓
+     KovaaK's 103 HFOV → Rivals VFOV 70.53° ✓
+   ═══════════════════════════════════════════════════════════════ */
 function initFOVConverter() {
   const fromEl  = document.getElementById('fovFrom');
   const toEl    = document.getElementById('fovTo');
