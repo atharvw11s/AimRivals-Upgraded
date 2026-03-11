@@ -23,19 +23,19 @@ const Scores = (() => {
     return (h >>> 0).toString(36); // unsigned 32-bit, base36
   }
 
-  // ── Get IP-based key (cached) ───────────────────────────────────
+  // ── Get persistent anonymous UUID (no IP tracking) ────────────
   async function getIpKey() {
-    if (_ipKey) return _ipKey;
-    try {
-      const res  = await fetch('https://api.ipify.org?format=json');
-      const data = await res.json();
-      _ipKey = 'ip_' + hashStr(data.ip);
-    } catch {
-      // Fallback: use a random ID stored in localStorage
-      let id = localStorage.getItem('aimrivals_uid');
-      if (!id) { id = 'uid_' + Math.random().toString(36).slice(2); localStorage.setItem('aimrivals_uid', id); }
-      _ipKey = id;
+    if (typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+      return 'uid_' + Auth.getUid();
     }
+    if (_ipKey) return _ipKey;
+    let id = localStorage.getItem('aimrivals_uid');
+    if (!id) {
+      id = 'anon_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2,'0')).join('');
+      localStorage.setItem('aimrivals_uid', id);
+    }
+    _ipKey = id;
     return _ipKey;
   }
 
