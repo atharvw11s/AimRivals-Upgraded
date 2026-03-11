@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AimRivals — App</title>
   <meta name="description" content="Daily aim training routines, sensitivity converters, FOV calculators and 3D warmup games.">
-  <link rel="stylesheet" href="styles.css?v=14">
+  <link rel="stylesheet" href="styles.css?v=16">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Karla:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -196,7 +196,7 @@
                 <p class="sens-result-value" id="sensOutput">—</p>
                 <p class="sens-result-note" id="sensNote">Enter your sensitivity and DPI above</p>
                 <div class="rivals-sens-notice" id="sensRivalsNote" style="display:none">
-                  Set your <strong>Roblox Camera Sensitivity</strong> to the value above. The result already accounts for your DPI and in-game slider setting.
+                  ⚠️ Set your <strong>Rivals In-Game Slider to 1</strong> (or 100%) if not already — then change your <strong>Roblox Camera Sensitivity</strong> to the value above.
                 </div>
                 <span id="sensDpiLabel" style="display:none"></span>
                 <span id="sensDpiVal"   style="display:none"></span>
@@ -446,9 +446,9 @@
 <div class="toast" id="toast"></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="auth.js?v=14"></script>
-<script src="scores.js?v=14"></script>
-<script src="script.js?v=14"></script>
+<script src="auth.js?v=16"></script>
+<script src="scores.js?v=16"></script>
+<script src="script.js?v=16"></script>
 
   <!-- Auth Modal -->
   <div class="auth-modal-bg" id="authModalBg">
@@ -466,7 +466,7 @@
           Continue with GitHub
         </button>
         <div class="auth-divider"><span>or stay anonymous</span></div>
-        <p class="auth-anon">Scores are saved by IP automatically — no sign-in needed.</p>
+        <p class="auth-anon">Scores are saved to this device automatically — sign in to sync across devices.</p>
       </div>
       <div id="authSignedIn" style="display:none">
         <div class="auth-user-info">
