@@ -701,6 +701,12 @@ const Warmup3D = (() => {
   let pointerLocked = false;
   let mouseSens = 0.0022;
 
+  // ── Touch state ──
+  let touchActive = false;
+  let lastTouchX = 0, lastTouchY = 0;
+  let touchSens = 0.005;
+  const isMobile = () => ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
   // ── Game timer ──
   let gameRunning = false;
   let score   = 0;
@@ -884,6 +890,16 @@ const Warmup3D = (() => {
     canvas.addEventListener('mousedown', onCanvasMouseDown);
     canvas.addEventListener('mouseup',   onCanvasMouseUp);
     canvas.addEventListener('click',     onCanvasClick); // fallback for pointer-lock re-acquire
+
+    // Touch support for mobile
+    canvas.addEventListener('touchstart',  onTouchStart,  { passive: false });
+    canvas.addEventListener('touchmove',   onTouchMove,   { passive: false });
+    canvas.addEventListener('touchend',    onTouchEnd,    { passive: false });
+
+    // On mobile, show touch hint instead of pointer lock prompt
+    if (isMobile() && pointerPromptEl) {
+      pointerPromptEl.textContent = 'Drag to aim · Tap to shoot';
+    }
 
     renderIdle();
   }
@@ -1234,7 +1250,7 @@ const Warmup3D = (() => {
   function onCanvasMouseDown(e) {
     if (e.button !== 0) return;
     if (!gameRunning) return;
-    if (!pointerLocked) { canvas.requestPointerLock(); return; }
+    if (!pointerLocked && !isMobile()) { canvas.requestPointerLock(); return; }
 
     if (gameMode === 'flicking')  onFlickClick();
     if (gameMode === 'tracking')  { /* tracking is continuous via raycaster in update */ }
@@ -1259,12 +1275,13 @@ const Warmup3D = (() => {
   // Legacy single-click handler kept for flicking (pointer lock re-acquire)
   function onCanvasClick() {
     if (!gameRunning) return;
-    if (!pointerLocked) { canvas.requestPointerLock(); return; }
+    if (!pointerLocked && !isMobile()) { canvas.requestPointerLock(); return; }
     if (gameMode === 'flicking') onFlickClick();
   }
 
   // ── POINTER LOCK ──
   function onPointerLockChange() {
+    if (isMobile()) return; // mobile uses touch, no pointer lock needed
     pointerLocked = document.pointerLockElement === canvas || document.mozPointerLockElement === canvas;
     crosshairEl.classList.toggle('visible', pointerLocked);
     pointerPromptEl.classList.toggle('visible', gameRunning && !pointerLocked);
@@ -1279,9 +1296,138 @@ const Warmup3D = (() => {
     camera.rotation.x = pitch;
   }
 
+  // ── MOBILE TOUCH CONTROLS ──────────────────────────────────────
+  // Left half of screen = look (drag to aim)
+  // Right half of screen = fire (tap)
+  // No pointer lock needed on mobile
+  let _touch = { active: false, id: null, lastX: 0, lastY: 0 };
+
+  function initTouchControls() {
+    if (!isMobile()) return;
+
+    // Hide pointer-lock hint on mobile
+    const hint = document.querySelector('.canvas-hint');
+    if (hint) hint.style.display = 'none';
+
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (!gameRunning) return;
+      Array.from(e.changedTouches).forEach(t => {
+        const isRight = t.clientX > canvas.clientWidth / 2;
+        if (isRight) {
+          // Right side tap = fire
+          if (gameMode === 'flicking')  onFlickClick();
+          if (gameMode === 'switching') onSwitchFire();
+        } else {
+          // Left side drag = look
+          if (!_touch.active) {
+            _touch.active = true;
+            _touch.id     = t.identifier;
+            _touch.lastX  = t.clientX;
+            _touch.lastY  = t.clientY;
+          }
+        }
+      });
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (!gameRunning) return;
+      Array.from(e.changedTouches).forEach(t => {
+        if (t.identifier !== _touch.id) return;
+        const dx = t.clientX - _touch.lastX;
+        const dy = t.clientY - _touch.lastY;
+        _touch.lastX = t.clientX;
+        _touch.lastY = t.clientY;
+        // Scale touch sensitivity (touch pixels are smaller movement)
+        const scale = 0.004;
+        yaw   -= dx * scale;
+        pitch -= dy * scale;
+        pitch  = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, pitch));
+        camera.rotation.y = yaw;
+        camera.rotation.x = pitch;
+      });
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+      Array.from(e.changedTouches).forEach(t => {
+        if (t.identifier === _touch.id) {
+          _touch.active = false;
+          _touch.id     = null;
+        }
+      });
+    }, { passive: false });
+  }
+
+  function onMobileTap() {
+    if (!gameRunning) return;
+    if (gameMode === 'flicking')  onFlickClick();
+    if (gameMode === 'switching') onSwitchFire();
+  }
+
+  // ── TOUCH HANDLERS ──
+  function onTouchStart(e) {
+    e.preventDefault();
+    if (!gameRunning) {
+      // Tap to start if overlay is showing
+      const overlay = document.getElementById('canvasOverlay');
+      if (overlay && overlay.classList.contains('visible')) return;
+      return;
+    }
+    const t = e.changedTouches[0];
+    touchActive = true;
+    lastTouchX = t.clientX;
+    lastTouchY = t.clientY;
+    // Show crosshair on mobile when game starts
+    if (crosshairEl) crosshairEl.classList.add('visible');
+    pointerLocked = true; // treat touch as always "locked"
+  }
+
+  function onTouchMove(e) {
+    e.preventDefault();
+    if (!gameRunning || !touchActive) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - lastTouchX;
+    const dy = t.clientY - lastTouchY;
+    lastTouchX = t.clientX;
+    lastTouchY = t.clientY;
+
+    // Scale sensitivity by canvas size for consistent feel
+    const sens = touchSens * (600 / (canvas.clientWidth || 600));
+    yaw   -= dx * sens;
+    pitch -= dy * sens;
+    pitch  = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, pitch));
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+
+  function onTouchEnd(e) {
+    e.preventDefault();
+    if (!gameRunning) return;
+    const t = e.changedTouches[0];
+    const dx = Math.abs(t.clientX - lastTouchX);
+    const dy = Math.abs(t.clientY - lastTouchY);
+    touchActive = false;
+    // Tap (minimal movement) = shoot
+    if (dx < 8 && dy < 8) {
+      if (gameMode === 'flicking')  onFlickClick();
+      if (gameMode === 'switching') onSwitchClick();
+      if (gameMode === 'tracking')  { /* tracking is continuous */ }
+      flashHitRing();
+    }
+  }
+
   // ── GAME FLOW ──
   function startGame() {
     const duration = parseInt(document.getElementById('gameDuration').value, 10);
+    if (isMobile()) {
+      pointerLocked = true;
+      if (crosshairEl) crosshairEl.classList.add('visible');
+      if (pointerPromptEl) pointerPromptEl.style.display = 'none';
+    } else {
+      canvas.requestPointerLock();
+    }
     gameRunning = true;
     score = 0; hits = 0; shots = 0; timeLeft = duration;
     resetHUD(duration);

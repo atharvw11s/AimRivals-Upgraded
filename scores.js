@@ -9,7 +9,7 @@ const Scores = (() => {
 
   const FIREBASE_URL = 'https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app';
   const MODES   = ['tracking', 'flicking', 'switching'];
-  const LS_KEY  = 'aimrivals_lb_v3';
+  const LS_KEY  = 'aimrivals_lb_v5';
   const BEST_KEY = 'aimrivals_best';
 
   let cache     = null;
@@ -51,7 +51,7 @@ const Scores = (() => {
     return `${y}-W${String(week).padStart(2, '0')}`;
   }
 
-  function weekPath() { return `/weeks/${getWeekKey()}`; }
+  function weekPath() { return `/weeks/v2_${getWeekKey()}`; }
   function empty()    { return { tracking:[], flicking:[], switching:[], week: getWeekKey() }; }
 
   function lsRead()   { try { return JSON.parse(localStorage.getItem(LS_KEY));   } catch { return null; } }

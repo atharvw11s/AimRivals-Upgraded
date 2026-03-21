@@ -1694,3 +1694,39 @@ main{position:relative;z-index:1}
   font-family:var(--f-k); font-size:13px; line-height:1.6; color:var(--tx-3);
 }
 .rivals-sens-notice strong { color:var(--tx); font-weight:700; }
+
+/* ── Mobile warmup touch support ─────────────────────────────── */
+@media (max-width: 768px) {
+  #warmupCanvas {
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .warmup-wrap {
+    padding: 8px;
+  }
+  #pointerPrompt {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+  /* Bigger crosshair on mobile for visibility */
+  .crosshair-h, .crosshair-v {
+    background: rgba(255,255,255,0.9) !important;
+  }
+}
+
+/* ── Mobile warmup ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .warmup-canvas-wrap { height: 60vw; min-height: 280px; }
+  .canvas-hint { display: none; }
+  .warmup-touch-hint {
+    display: flex !important;
+    position: absolute; bottom: 12px; left: 0; right: 0;
+    justify-content: center; gap: 24px; pointer-events: none; z-index: 5;
+  }
+  .wth-left, .wth-right {
+    background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; padding: 8px 16px;
+    font-family: var(--f-k); font-size: 12px; color: var(--tx-3); text-align: center;
+  }
+}
+.warmup-touch-hint { display: none; }
