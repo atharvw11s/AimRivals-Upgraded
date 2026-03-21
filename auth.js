@@ -41,8 +41,12 @@ const Auth = (() => {
         if (user) {
           // Close modal on successful sign-in
           if (wasSignedOut) closeModal();
-          const saved = localStorage.getItem('aimrivals_display_name');
-          if (!saved) localStorage.setItem('aimrivals_display_name', user.displayName || user.email?.split('@')[0] || 'Player');
+          // Only save to localStorage if nothing stored yet — prefer Google name
+          const stored = (localStorage.getItem('aimrivals_display_name') || '').trim();
+          if (!stored) {
+            const googleName = (user.displayName || user.email?.split('@')[0] || '').trim();
+            if (googleName) localStorage.setItem('aimrivals_display_name', googleName);
+          }
         }
       });
     } catch(e) {
@@ -97,8 +101,9 @@ const Auth = (() => {
   function getUid()         { return currentUser?.uid || null; }
   function isSignedIn()     { return !!currentUser; }
   function getDisplayName() {
-    return localStorage.getItem('aimrivals_display_name')
-      || currentUser?.displayName
+    const stored = (localStorage.getItem('aimrivals_display_name') || '').trim();
+    return stored
+      || currentUser?.displayName?.trim()
       || currentUser?.email?.split('@')[0]
       || null;
   }
@@ -156,7 +161,7 @@ const Auth = (() => {
         if (nn) nn.textContent = getDisplayName();
       }
       if (nmSignInLink) nmSignInLink.style.display = 'none';
-      if (nmInput)      { nmInput.value = getDisplayName() || ''; nmInput.style.display = 'none'; }
+      if (nmInput)      { nmInput.value = getDisplayName() || ''; nmInput.style.display = ''; }
     } else {
       if (signedOut) signedOut.style.display = 'block';
       if (signedIn)  signedIn.style.display  = 'none';

@@ -1388,8 +1388,14 @@ function showNameModal(mode, finalScore, acc) {
   badge.dataset.acc    = acc || '—';
   sc.textContent       = finalScore;
 
-  const saved = localStorage.getItem('aimrivals_name') || '';
-  input.value = saved;
+  // Pre-fill: Google display name > saved name > empty
+  let prefillName = '';
+  if (typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+    // Use Firebase display name (e.g. Google account name) directly
+    prefillName = Auth.getDisplayName() || '';
+  }
+  if (!prefillName) prefillName = localStorage.getItem('aimrivals_name') || '';
+  input.value = prefillName;
 
   bg.classList.add('visible');
   setTimeout(() => input.focus(), 100);
@@ -1472,10 +1478,20 @@ function initLeaderboard() {
 
   async function doSubmit() {
     const badge = document.getElementById('nmBadge');
-    const name  = (input?.value || '').trim() || 'Anonymous';
+    const name  = (input?.value || '').trim();
     const mode  = badge?.dataset.mode  || lbCurrentMode;
     const score = parseInt(badge?.dataset.score || '0', 10);
     const acc   = badge?.dataset.acc   || '—';
+
+    // Block submit if no name or reserved placeholder
+    if (!name || name.toLowerCase() === 'anonymous') {
+      input.style.borderColor = '#ef4444';
+      input.placeholder = name.toLowerCase() === 'anonymous' ? 'Please use a real name!' : 'Please enter a name!';
+      input.value = '';
+      input.focus();
+      setTimeout(() => { input.style.borderColor = ''; input.placeholder = 'Your name…'; }, 2500);
+      return;
+    }
 
     localStorage.setItem('aimrivals_name', name);
     submitBtn.textContent = 'Saving…';

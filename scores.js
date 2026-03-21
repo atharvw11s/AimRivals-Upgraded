@@ -73,6 +73,8 @@ const Scores = (() => {
       rec.week = getWeekKey();
       cache = rec;
       lsWrite(rec);
+      // Clean up old weeks in the background (don't await — non-blocking)
+      cleanOldWeeks();
       return rec;
     } catch (e) {
       console.warn('[Scores] load failed — using cache:', e.message);
@@ -80,6 +82,26 @@ const Scores = (() => {
       if (cached && cached.week === getWeekKey()) { cache = cached; return cache; }
       cache = empty();
       return cache;
+    }
+  }
+
+  // ── Delete old week data from Firebase (keep last 2 weeks max) ──
+  async function cleanOldWeeks() {
+    try {
+      const res  = await fetch(`${FIREBASE_URL}/weeks.json?shallow=true`);
+      if (!res.ok) return;
+      const keys = await res.json();
+      if (!keys) return;
+      const currentWeek = getWeekKey();
+      const allWeeks = Object.keys(keys).sort();
+      // Delete any week that isn't the current one
+      for (const week of allWeeks) {
+        if (week !== currentWeek) {
+          await fetch(`${FIREBASE_URL}/weeks/${week}.json`, { method: 'DELETE' });
+        }
+      }
+    } catch (e) {
+      console.warn('[Scores] cleanOldWeeks failed:', e.message);
     }
   }
 
@@ -106,7 +128,8 @@ const Scores = (() => {
   async function submit(mode, score, name) {
     const data      = await load();
     if (!Array.isArray(data[mode])) data[mode] = [];
-    const cleanName = (name || 'Anonymous').trim().slice(0, 20);
+    const cleanName = (name || '').trim().slice(0, 20);
+    if (!cleanName || cleanName.toLowerCase() === 'anonymous') return data[mode]; // reject blank/anonymous
     const roundedScore = Math.round(score);
     const existing  = data[mode].findIndex(
       e => e.name.toLowerCase() === cleanName.toLowerCase()
