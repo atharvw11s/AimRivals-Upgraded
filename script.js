@@ -325,19 +325,15 @@ function renderPlaylist() {
    ═══════════════════════════════════════════════════════════════ */
 function parsePath() {
   const valid = ['routines','converters','warmup'];
-  // Check sessionStorage first (set by landing page links)
+  // Read section set by the folder index.html or landing page
   const stored = sessionStorage.getItem('aimrivals_section');
   if (stored && valid.includes(stored)) {
     sessionStorage.removeItem('aimrivals_section');
     return stored;
   }
-  // Read from URL path — works with folder structure (/routines/, /converters/ etc.)
-  const parts = location.pathname.replace(/\/+$/, '').split('/');
-  const fromPath = parts[parts.length - 1];
-  if (valid.includes(fromPath)) return fromPath;
-  // Fall back to hash
-  const fromHash = location.hash.replace(/^#\/?/, '');
-  if (valid.includes(fromHash)) return fromHash;
+  // Also detect from URL path directly (e.g. /routines/)
+  const slug = location.pathname.replace(/\/+$/, '').split('/').pop();
+  if (valid.includes(slug)) return slug;
   return 'routines';
 }
 
@@ -351,9 +347,7 @@ function showSection(target) {
   if (target === 'warmup') setTimeout(() => Warmup3D.resize(), 60);
 
   // Store in history state — no hash, no path change
-  // Update URL to match folder structure
-  const base = location.pathname.replace(/\/(routines|converters|warmup)\/?$/, '').replace(/\/+$/, '');
-  history.replaceState({ section: target }, '', base + '/' + target + '/');
+  // URL is already correct from the folder structure — no manipulation needed
 
   const titles = { routines:'Routines', converters:'Converters', warmup:'Warmup' };
   document.title = 'AimRivals — ' + titles[target];
