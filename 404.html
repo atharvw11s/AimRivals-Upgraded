@@ -2,12 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AimRivals — Page Not Found</title>
+  <title>AimRivals — Redirecting…</title>
   <script>
-    // Redirect unknown paths back to the landing page
-    window.location.replace(
-      window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/') 
-    );
+    (function () {
+      const base   = '/AimRivals-Upgraded/';
+      const path   = window.location.pathname.replace(base, '').replace(/\/+$/, '').toLowerCase();
+
+      const routes = {
+        'landing':    { page: 'index.html', section: null         },
+        'home':       { page: 'index.html', section: null         },
+        '':           { page: 'index.html', section: null         },
+        'routines':   { page: 'app.html',   section: 'routines'  },
+        'converters': { page: 'app.html',   section: 'converters'},
+        'converter':  { page: 'app.html',   section: 'converters'},
+        'warmup':     { page: 'app.html',   section: 'warmup'    },
+        'warmups':    { page: 'app.html',   section: 'warmup'    },
+        'app':        { page: 'app.html',   section: 'routines'  },
+      };
+
+      const match = routes[path];
+      if (match) {
+        if (match.section) sessionStorage.setItem('aimrivals_section', match.section);
+        window.location.replace(window.location.origin + base + match.page);
+      } else {
+        window.location.replace(window.location.origin + base + 'index.html');
+      }
+    })();
   </script>
   <style>
     body { background:#080612; color:#ede8f8; font-family:sans-serif;
