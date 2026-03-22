@@ -346,8 +346,9 @@ function showSection(target) {
 
   if (target === 'warmup') setTimeout(() => Warmup3D.resize(), 60);
 
-  // Store in history state — no hash, no path change
-  // URL is already correct from the folder structure — no manipulation needed
+  // Update URL to reflect current section cleanly
+  const base = window.location.origin + window.location.pathname.replace(/\/(routines|converters|warmup)(\/.*)?$/, '');
+  history.pushState({ section: target }, '', base + '/' + target + '/');
 
   const titles = { routines:'Routines', converters:'Converters', warmup:'Warmup' };
   document.title = 'AimRivals — ' + titles[target];
