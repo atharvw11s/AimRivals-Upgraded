@@ -1,5 +1,5 @@
 /* ================================================================
-   AimRivals — landing.js
+   Zenith Aim — landing.js
    Landing page particle canvas + interactions
    ================================================================ */
 (function () {
@@ -118,7 +118,7 @@ document.querySelectorAll('[data-goto]').forEach(el => {
   el.addEventListener('click', function(e) {
     e.preventDefault();
     const section = this.dataset.goto;
-    sessionStorage.setItem('aimrivals_section', section);
+    sessionStorage.setItem('zenith_section', section);
     window.location.href = 'app.html';
   });
 });

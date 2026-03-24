@@ -326,9 +326,9 @@ function renderPlaylist() {
 function parsePath() {
   const valid = ['routines','converters','warmup'];
   // Read section set by the folder index.html or landing page
-  const stored = sessionStorage.getItem('aimrivals_section');
+  const stored = sessionStorage.getItem('zenith_section');
   if (stored && valid.includes(stored)) {
-    sessionStorage.removeItem('aimrivals_section');
+    sessionStorage.removeItem('zenith_section');
     return stored;
   }
   // Also detect from URL path directly (e.g. /routines/)
@@ -346,7 +346,21 @@ function showSection(target, fromPopState) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.section === target));
   document.querySelectorAll('.section').forEach(s  => s.classList.toggle('active', s.id === target));
 
-  if (target === 'warmup') setTimeout(() => Warmup3D.resize(), 60);
+  if (target === 'warmup') {
+    if (typeof THREE === 'undefined') {
+      // Lazy load Three.js only on first warmup visit
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      script.onload = () => { Warmup3D.init(); };
+      script.onerror = () => {
+        const el = document.getElementById('canvasOverlay');
+        if (el) el.innerHTML = '<div class="overlay-inner"><div class="overlay-title" style="font-size:20px;color:#ef4444">Three.js failed to load</div><div class="overlay-sub">Check your internet connection</div></div>';
+      };
+      document.head.appendChild(script);
+    } else {
+      setTimeout(() => Warmup3D.resize(), 60);
+    }
+  }
 
   const repoBase = window.location.origin + '/AimRivals-Upgraded';
   const url = repoBase + '/' + target + '/';
@@ -1581,7 +1595,7 @@ function showNameModal(mode, finalScore, acc) {
     // Use Firebase display name (e.g. Google account name) directly
     prefillName = Auth.getDisplayName() || '';
   }
-  if (!prefillName) prefillName = localStorage.getItem('aimrivals_name') || '';
+  if (!prefillName) prefillName = localStorage.getItem('zenith_name') || '';
   input.value = prefillName;
 
   bg.classList.add('visible');
@@ -1686,7 +1700,7 @@ function initLeaderboard() {
       return;
     }
 
-    localStorage.setItem('aimrivals_name', name);
+    localStorage.setItem('zenith_name', name);
     submitBtn.textContent = 'Saving…';
     submitBtn.disabled = true;
 
@@ -1755,10 +1769,5 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPlaylist();
   initLeaderboard();
 
-  // Init 3D warmup only if Three.js loaded
-  if (typeof THREE !== 'undefined') {
-    Warmup3D.init();
-  } else {
-    document.getElementById('canvasOverlay').innerHTML = '<div class="overlay-inner"><div class="overlay-title" style="font-size:20px;color:#ef4444">Three.js failed to load</div><div class="overlay-sub">Check your internet connection</div></div>';
-  }
+  // Three.js is lazy loaded when warmup tab is first opened (see showSection)
 });

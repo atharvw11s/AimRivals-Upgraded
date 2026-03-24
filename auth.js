@@ -1,5 +1,5 @@
 /* ================================================================
-   AimRivals — auth.js
+   Zenith Aim — auth.js
    Firebase Authentication: Google + GitHub sign-in.
    Fails gracefully if Firebase is not configured.
    ================================================================ */
@@ -42,10 +42,10 @@ const Auth = (() => {
           // Close modal on successful sign-in
           if (wasSignedOut) closeModal();
           // Only save to localStorage if nothing stored yet — prefer Google name
-          const stored = (localStorage.getItem('aimrivals_display_name') || '').trim();
+          const stored = (localStorage.getItem('zenith_display_name') || '').trim();
           if (!stored) {
             const googleName = (user.displayName || user.email?.split('@')[0] || '').trim();
-            if (googleName) localStorage.setItem('aimrivals_display_name', googleName);
+            if (googleName) localStorage.setItem('zenith_display_name', googleName);
           }
         }
       });
@@ -101,7 +101,7 @@ const Auth = (() => {
   function getUid()         { return currentUser?.uid || null; }
   function isSignedIn()     { return !!currentUser; }
   function getDisplayName() {
-    const stored = (localStorage.getItem('aimrivals_display_name') || '').trim();
+    const stored = (localStorage.getItem('zenith_display_name') || '').trim();
     return stored
       || currentUser?.displayName?.trim()
       || currentUser?.email?.split('@')[0]
@@ -111,7 +111,7 @@ const Auth = (() => {
   function saveDisplayName(name) {
     const clean = name.trim().slice(0, 20);
     if (!clean) return;
-    localStorage.setItem('aimrivals_display_name', clean);
+    localStorage.setItem('zenith_display_name', clean);
     // Update name shown in modal
     const el = document.getElementById('authDisplayName');
     if (el) el.value = clean;

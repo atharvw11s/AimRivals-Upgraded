@@ -1,5 +1,5 @@
 /* ================================================================
-   AimRivals — scores.js
+   Zenith Aim — scores.js
    Weekly global leaderboard + IP-based personal bests via Firebase.
    Leaderboard resets every Monday. Personal bests are permanent.
    ================================================================ */
@@ -9,8 +9,8 @@ const Scores = (() => {
 
   const FIREBASE_URL = 'https://aimrivals-default-rtdb.asia-southeast1.firebasedatabase.app';
   const MODES   = ['tracking', 'flicking', 'switching'];
-  const LS_KEY  = 'aimrivals_lb_v5';
-  const BEST_KEY = 'aimrivals_best';
+  const LS_KEY  = 'zenith_lb_v1';
+  const BEST_KEY = 'zenith_best';
 
   let cache     = null;
   let saving    = false;
@@ -29,11 +29,11 @@ const Scores = (() => {
       return 'uid_' + Auth.getUid();
     }
     if (_ipKey) return _ipKey;
-    let id = localStorage.getItem('aimrivals_uid');
+    let id = localStorage.getItem('zenith_uid');
     if (!id) {
       id = 'anon_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2,'0')).join('');
-      localStorage.setItem('aimrivals_uid', id);
+      localStorage.setItem('zenith_uid', id);
     }
     _ipKey = id;
     return _ipKey;
