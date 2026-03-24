@@ -346,9 +346,11 @@ function showSection(target) {
 
   if (target === 'warmup') setTimeout(() => Warmup3D.resize(), 60);
 
-  // Update URL to always be /AimRivals-Upgraded/<section>/
+  // Update URL to clean folder path — works from app.html or any subfolder
   const repoBase = window.location.origin + '/AimRivals-Upgraded';
   history.pushState({ section: target }, '', repoBase + '/' + target + '/');
+  // Update nav active state to match
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.section === target));
 
   const titles = { routines:'Routines', converters:'Converters', warmup:'Warmup' };
   document.title = 'AimRivals — ' + titles[target];
@@ -1200,7 +1202,7 @@ const Warmup3D = (() => {
   }
 
   function onSwitchFire() {
-    if (!gameRunning || switchTargets.length === 0 || !pointerLocked) return;
+    if (!gameRunning || switchTargets.length === 0 || (!pointerLocked && !isMobile())) return;
     shots++;
     raycaster.setFromCamera(CENTER, camera);
     const alive = switchTargets.filter(m => !m._dead);
@@ -1413,7 +1415,7 @@ const Warmup3D = (() => {
     // Tap (minimal movement) = shoot
     if (dx < 8 && dy < 8) {
       if (gameMode === 'flicking')  onFlickClick();
-      if (gameMode === 'switching') onSwitchClick();
+      if (gameMode === 'switching') onSwitchFire();
       if (gameMode === 'tracking')  { /* tracking is continuous */ }
       flashHitRing();
     }
@@ -1495,6 +1497,8 @@ const Warmup3D = (() => {
   }
 
   function flashHitRing() {
+    // On mobile, only show the hit ring during flicking
+    if (isMobile() && gameMode !== 'flicking') return;
     hitRingEl.classList.remove('flash');
     void hitRingEl.offsetWidth; // reflow
     hitRingEl.classList.add('flash');
@@ -1593,14 +1597,20 @@ function renderLeaderboard(entries) {
     return;
   }
   const MEDALS = ['🥇','🥈','🥉'];
-  tbody.innerHTML = entries.map((e, i) => `
+  const DIFF_COLOR = { beginner:'#4a7fff', intermediate:'#f0c800', advanced:'#ef4444' };
+  tbody.innerHTML = entries.map((e, i) => {
+    const diff  = (e.difficulty || '').toLowerCase();
+    const label = diff ? diff.charAt(0).toUpperCase() + diff.slice(1) : '—';
+    const color = DIFF_COLOR[diff] || 'var(--tx-3)';
+    return `
     <tr class="lb-row ${i < 3 ? 'lb-top' : ''}">
       <td class="lb-rank-col">${MEDALS[i] || (i+1)}</td>
       <td class="lb-name">${escapeHtml(e.name)}</td>
       <td class="lb-score-col lb-score-val">${e.score}</td>
+      <td class="lb-diff-col" style="color:${color};font-size:11px;font-weight:600;text-transform:capitalize">${label}</td>
       <td class="lb-date-col">${e.date || '—'}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 function escapeHtml(str) {
@@ -1669,7 +1679,7 @@ function initLeaderboard() {
 
     try {
       if (typeof Scores !== 'undefined') {
-        await Scores.submit(mode, score, name);
+        await Scores.submit(mode, score, name, document.getElementById('gameDifficulty')?.value || 'medium');
         await loadLeaderboard(mode);
       }
     } catch(e) { console.warn('Submit failed', e); }

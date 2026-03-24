@@ -125,7 +125,7 @@ const Scores = (() => {
   }
 
   // One entry per name per mode — updates if new score beats old one
-  async function submit(mode, score, name) {
+  async function submit(mode, score, name, difficulty) {
     const data      = await load();
     if (!Array.isArray(data[mode])) data[mode] = [];
     const cleanName = (name || '').trim().slice(0, 20);
@@ -139,10 +139,11 @@ const Scores = (() => {
       data[mode].splice(existing, 1); // remove old entry, replace with new best
     }
     data[mode].push({
-      name:  cleanName,
-      score: roundedScore,
-      date:  new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
-      ts:    Date.now(),
+      name:       cleanName,
+      score:      roundedScore,
+      difficulty: difficulty || 'beginner',
+      date:       new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
+      ts:         Date.now(),
     });
     data[mode].sort((a, b) => b.score - a.score);
     if (data[mode].length > 200) data[mode] = data[mode].slice(0, 200);
