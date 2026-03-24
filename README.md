@@ -1,8 +1,8 @@
-# AimRivals — Upgraded
+# Zenith Aim
 
 > Daily aim training routines, sensitivity converters, FOV calculators and live 3D warmup games — built for FPS players.
 
-**Live site:** https://atharvw11s.github.io/AimRivals-Upgraded/  
+**Live site:** https://atharvw11s.github.io/Zenith Aim-Upgraded/  
 **Author:** PurplsXD
 
 ---
