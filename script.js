@@ -337,7 +337,9 @@ function parsePath() {
   return 'routines';
 }
 
-function showSection(target) {
+let _currentSection = null;
+
+function showSection(target, fromPopState) {
   const valid = ['routines','converters','warmup'];
   if (!valid.includes(target)) target = 'routines';
 
@@ -346,9 +348,15 @@ function showSection(target) {
 
   if (target === 'warmup') setTimeout(() => Warmup3D.resize(), 60);
 
-  // Update displayed URL cosmetically without adding a history entry
   const repoBase = window.location.origin + '/AimRivals-Upgraded';
-  history.replaceState({ section: target }, '', repoBase + '/' + target + '/');
+  if (fromPopState) {
+    // Coming from back/forward — don't add another history entry
+    history.replaceState({ section: target }, '', repoBase + '/' + target + '/');
+  } else if (target !== _currentSection) {
+    // User clicked a tab — push new history entry so back button works
+    history.pushState({ section: target }, '', repoBase + '/' + target + '/');
+  }
+  _currentSection = target;
 
   const titles = { routines:'Routines', converters:'Converters', warmup:'Warmup' };
   document.title = 'AimRivals — ' + titles[target];
@@ -363,9 +371,9 @@ function initNav() {
   });
 
   window.addEventListener('popstate', e => {
-    const slug  = location.pathname.replace(/\/+$/, '').split('/').pop();
-    const valid = ['routines', 'converters', 'warmup'];
-    showSection(valid.includes(slug) ? slug : 'routines');
+    const section = e.state?.section || location.pathname.replace(/\/+$/, '').split('/').pop();
+    const valid   = ['routines', 'converters', 'warmup'];
+    showSection(valid.includes(section) ? section : 'routines', true);
   });
 
   showSection(parsePath());
