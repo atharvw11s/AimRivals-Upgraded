@@ -9,9 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Karla:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="manifest" href="../manifest.json">
-  <script>sessionStorage.setItem("zenithaim_section","converters");</script>
+<script>sessionStorage.setItem("zenith_section","converters");</script>
 </head>
 <body>
 <div class="app-frame">
@@ -22,37 +21,427 @@
     <div class="nav-brand">
       <a href="../index.html" class="nav-home-link">
         <span class="nav-title">Zenith Aim</span>
+        
       </a>
     </div>
     <div class="nav-links">
-      <a href="../routines/" class="nav-link" data-section="routines">Routines</a>
-      <a href="../converters/" class="nav-link active" data-section="converters">Converters</a>
+      <a href="../routines/" class="nav-link active" data-section="routines">Routines</a>
+      <a href="../converters/" class="nav-link" data-section="converters">Converters</a>
       <a href="../warmup/" class="nav-link" data-section="warmup">Warmup</a>
     </div>
     <div class="nav-right-app">
       <button class="nav-signin-btn" id="navSignInBtn" onclick="Auth.openModal()">Sign In</button>
-      <a href="https://github.com/atharvw11s/Zenith-Aim" target="_blank" rel="noopener" class="nav-gh-app" title="GitHub Repository">
+      <a href="https://github.com/atharvw11s/AimRivals-Upgraded" target="_blank" rel="noopener" class="nav-gh-app" title="GitHub Repository">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       </a>
     </div>
   </nav>
 
   <main id="app">
-    <!-- All your original content is 100% unchanged below this line -->
+
     <!-- ═══ ROUTINES ═══ -->
-    <section id="routines" class="section">
-      ... (everything you had is kept exactly the same) ...
+    <section id="routines" class="section active">
+      <div class="routines-layout">
+        <aside class="settings-panel" id="settingsPanel">
+          <div class="panel-rainbow"></div>
+          <div class="panel-inner">
+            <h2 class="panel-title">Options</h2>
+            <div class="setting-block">
+              <label class="setting-label">Platform</label>
+              <div class="trainer-toggle" id="trainerToggle">
+                <button class="toggle-btn active" data-trainer="aimlabs">Aimlabs</button>
+                <div class="toggle-sep"></div>
+                <button class="toggle-btn" data-trainer="kovaaks">Kovaak's</button>
+              </div>
+            </div>
+            <div class="setting-block">
+              <label class="setting-label">Rank</label>
+              <div class="rank-selector" id="rankSelector">
+                <button class="rank-btn active" data-rank="beginner">Beginner</button>
+                <button class="rank-btn" data-rank="intermediate">Intermediate</button>
+                <button class="rank-btn" data-rank="advanced">Advanced</button>
+              </div>
+            </div>
+            <div class="setting-block">
+              <label class="setting-label">Training Priority</label>
+              <div class="sliders-wrap">
+                <div class="slider-row">
+                  <div class="slider-header">
+                    <span class="sl-label flicking-label">⚡ Flicking</span>
+                    <span class="sl-val" id="flickingVal">34%</span>
+                  </div>
+                  <input type="range" class="pslider flicking-slider" id="flickingSlider" min="0" max="100" value="34">
+                </div>
+                <div class="slider-row">
+                  <div class="slider-header">
+                    <span class="sl-label tracking-label">🎯 Tracking</span>
+                    <span class="sl-val" id="trackingVal">33%</span>
+                  </div>
+                  <input type="range" class="pslider tracking-slider" id="trackingSlider" min="0" max="100" value="33">
+                </div>
+                <div class="slider-row">
+                  <div class="slider-header">
+                    <span class="sl-label switching-label">🔀 Switching</span>
+                    <span class="sl-val" id="switchingVal">33%</span>
+                  </div>
+                  <input type="range" class="pslider switching-slider" id="switchingSlider" min="0" max="100" value="33">
+                </div>
+              </div>
+            </div>
+            <div class="total-tasks-box">
+              <span class="total-tasks-lbl">Total Tasks: <span id="totalTasks">9</span></span>
+            </div>
+            <div class="panel-spacer"></div>
+            <span id="playlistMeta" style="display:none"></span>
+            <span id="estTime"      style="display:none"></span>
+            <span id="navStatus"    style="display:none"></span>
+            <button class="btn-copy" id="copyPlaylist">📋 Copy Playlist</button>
+          </div>
+        </aside>
+
+        <div class="playlist-area">
+          <div class="playlist-heading">
+            <div>
+              <h1 class="playlist-title">Today's Routine</h1>
+              <p class="playlist-subtitle" id="playlistSubtitle">Generating playlist…</p>
+            </div>
+          </div>
+          <div class="task-grid" id="taskGrid"></div>
+          <footer class="app-footer">
+            <div class="app-footer-inner">
+              <span>Curated by <strong>PurplsXD</strong> · Voltaic S3/S5 · Aimlabs &amp; KovaaK's</span>
+              <a href="https://github.com/atharvw11s/AimRivals-Upgraded" target="_blank" rel="noopener" class="footer-gh-link">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-1px;margin-right:5px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                github.com/atharvw11s/AimRivals-Upgraded
+              </a>
+            </div>
+          </footer>
+        </div>
+      </div>
     </section>
 
     <!-- ═══ CONVERTERS ═══ -->
-    <section id="converters" class="section active">
-      ... (everything you had is kept exactly the same) ...
+    <section id="converters" class="section">
+      <div class="conv-section-wrap">
+        <h1 class="conv-page-title">CONVERTERS</h1>
+        <div class="converters-grid">
+
+          <!-- Sensitivity Converter -->
+          <div class="conv-card">
+            <h3 class="conv-card-title">Sensitivity Converter</h3>
+            <div class="conv-body">
+              <div class="conv-fromto-row">
+                <div class="field-group">
+                  <label class="field-label">Convert From</label>
+                  <select id="sensFrom" class="field-select">
+                    <optgroup label="Roblox FPS">
+                      <option value="rivals" selected>Roblox Rivals</option>
+                      <option value="arsenal">Roblox Arsenal</option>
+                    </optgroup>
+                    <optgroup label="Aim Trainers">
+                      <option value="aimlabs">Aimlabs</option>
+                      <option value="kovaaks">Kovaak's</option>
+                    </optgroup>
+                    <optgroup label="FPS Games">
+                      <option value="valorant">Valorant</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <button class="swap-btn" id="sensSwapBtn" title="Swap">⇄</button>
+                <div class="field-group">
+                  <label class="field-label">Convert To</label>
+                  <select id="sensTo" class="field-select">
+                    <optgroup label="Roblox FPS">
+                      <option value="rivals">Roblox Rivals</option>
+                      <option value="arsenal">Roblox Arsenal</option>
+                    </optgroup>
+                    <optgroup label="Aim Trainers">
+                      <option value="aimlabs" selected>Aimlabs</option>
+                      <option value="kovaaks">Kovaak's</option>
+                    </optgroup>
+                    <optgroup label="FPS Games">
+                      <option value="valorant">Valorant</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+              <div class="conv-inputs-row">
+                <div class="field-group" style="flex:1">
+                  <label class="field-label" id="sensFromLabel">Camera Sensitivity</label>
+                  <input type="text" id="rivalsSens" class="field-input" placeholder="e.g. 0.5">
+                </div>
+                <div class="field-group" id="sensMultiplierRow" style="display:none;flex:1">
+                  <label class="field-label">In-Game Slider <span style="font-size:10px;opacity:.5">(default 100%)</span></label>
+                  <input type="text" id="rivalsMultiplier" class="field-input" placeholder="100%">
+                </div>
+              </div>
+              <div class="dpi-row">
+                <div class="field-group">
+                  <label class="field-label">From DPI</label>
+                  <input type="number" id="mouseDPIFrom" class="field-input" placeholder="800" step="1" min="100" max="32000" value="800">
+                </div>
+                <button class="dpi-lock-btn" id="dpiLockBtn" title="Link DPIs" aria-label="Lock DPIs">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path class="lock-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </button>
+                <div class="field-group">
+                  <label class="field-label">To DPI</label>
+                  <input type="number" id="mouseDPITo" class="field-input" placeholder="800" step="1" min="100" max="32000" value="800">
+                </div>
+              </div>
+              <div class="sens-result-box" id="sensResult">
+                <p class="sens-result-label" id="sensResultLabel">Calculated Sensitivity:</p>
+                <p class="sens-result-value" id="sensOutput">—</p>
+                <p class="sens-result-note" id="sensNote">Enter your sensitivity and DPI above</p>
+                <div class="rivals-sens-notice" id="sensRivalsNote" style="display:none">
+                  ⚠️ Set your <strong>Rivals In-Game Slider to 1</strong> (or 100%) if not already — then change your <strong>Roblox Camera Sensitivity</strong> to the value above.
+                </div>
+                
+                <span id="sensDpiLabel" style="display:none"></span>
+                <span id="sensDpiVal"   style="display:none"></span>
+              </div>
+              <div class="sens-quick" id="sensQuick" style="display:none">
+                <p class="sq-title">All platforms — same aim feel</p>
+                <div class="sq-grid" id="sqGrid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FOV Converter -->
+          <div class="conv-card">
+            <h3 class="conv-card-title">FOV Converter</h3>
+            <div class="conv-body">
+              <div class="conv-fromto-row">
+                <div class="field-group">
+                  <label class="field-label">Convert From</label>
+                  <select id="fovFrom" class="field-select">
+                    <option value="rivals" selected>Roblox Rivals</option>
+                    <option value="arsenal">Roblox Arsenal</option>
+                    <option value="aimlabs">Aimlabs</option>
+                    <option value="kovaaks">Kovaak's</option>
+                  </select>
+                </div>
+                <button class="swap-btn" id="fovSwapBtn" title="Swap">⇄</button>
+                <div class="field-group">
+                  <label class="field-label">Convert To</label>
+                  <select id="fovTo" class="field-select">
+                    <option value="rivals">Roblox Rivals</option>
+                    <option value="arsenal">Roblox Arsenal</option>
+                    <option value="aimlabs">Aimlabs</option>
+                    <option value="kovaaks" selected>Kovaak's</option>
+                  </select>
+                </div>
+              </div>
+              <div class="conv-inputs-row">
+                <div class="field-group">
+                  <label class="field-label" id="fovFromLabel">Vertical FOV</label>
+                  <input type="number" id="robloxVFOV" class="field-input" placeholder="80" min="1" max="179" value="80">
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Aspect Ratio</label>
+                  <select id="fovAspect" class="field-select">
+                    <option value="1.7778" selected>16:9 (Standard)</option>
+                    <option value="1.6">16:10</option>
+                    <option value="1.3333">4:3</option>
+                    <option value="2.3333">21:9 (Ultra)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-calc-fov" id="convertFOV">CALCULATE</button>
+              <div class="fov-result-row" id="fovResult">
+                <div class="fov-result-col">
+                  <p class="fov-result-lbl" id="fovResultLabel">Calculated FOV</p>
+                  <p class="fov-result-val" id="fovOutput">0</p>
+                </div>
+                <div class="fov-result-col">
+                  <p class="fov-result-lbl">FOV Type</p>
+                  <p class="fov-result-val fov-type-val" id="fovType">Vertical</p>
+                </div>
+              </div>
+              <div id="fovHfovRow" style="display:none;padding:10px 0 0">
+                <p class="fov-result-lbl" style="margin-bottom:4px">Equivalent HFOV (KovaaK's)</p>
+                <p class="fov-result-val" id="fovHfovOut" style="font-size:22px">—</p>
+              </div>
+              <div class="fov-note-box" id="fovNoteBox" style="display:none">
+                <p id="fovNote" class="fov-note-text"></p>
+                <p id="fovExtraNote" class="fov-note-text fov-note-sub"></p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="formula-note">
+          <span class="fn-icon">ℹ️</span>
+          <div>
+            <strong>Sensitivity:</strong>
+            Rivals &amp; Arsenal yaw = 0.37503 · Aimlabs yaw = 0.05 · KovaaK's yaw = 0.022 ·
+            Formula: <code>toSens = (fromDPI × fromYaw × effectiveSens) / (toDPI × toYaw)</code><br>
+            <strong>FOV:</strong>
+            Rivals default 80 VFOV · Arsenal &amp; Aimlabs default 70 VFOV · KovaaK's uses HFOV ·
+            Formula: <code>HFOV = 2·atan(tan(VFOV/2)·aspect)</code>
+          </div>
+        </div>
+
+        <footer class="app-footer">
+          <div class="app-footer-inner">
+            <span>Curated by <strong>PurplsXD</strong> · Voltaic S3/S5 · Aimlabs &amp; KovaaK's</span>
+            <a href="https://github.com/atharvw11s/AimRivals-Upgraded" target="_blank" rel="noopener" class="footer-gh-link">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-1px;margin-right:5px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              github.com/atharvw11s/AimRivals-Upgraded
+            </a>
+          </div>
+        </footer>
+      </div>
     </section>
 
     <!-- ═══ WARMUP ═══ -->
     <section id="warmup" class="section">
-      ... (everything you had is kept exactly the same) ...
+      <div class="warmup-section-wrap">
+        <div class="warmup-header-row">
+          <div>
+            <h1 class="warmup-title">3D Warmup</h1>
+            <p class="warmup-sub">Lock your cursor &amp; warm up before your aim trainer session</p>
+          </div>
+          <div class="warmup-controls">
+            <div class="wc-group">
+              <label class="wc-label">Duration</label>
+              <select id="gameDuration" class="wc-select">
+                <option value="15">15 sec</option>
+                <option value="30" selected>30 sec</option>
+                <option value="60">60 sec</option>
+              </select>
+            </div>
+            <div class="wc-group">
+              <label class="wc-label">Mouse Sensitivity</label>
+              <input type="number" id="gameSensitivity" class="wc-input" placeholder="0.0022" step="0.0001" min="0.0001" max="1" value="0.0022">
+            </div>
+            <div class="wc-group">
+              <label class="wc-label">Difficulty</label>
+              <select id="gameDifficulty" class="wc-select">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <button class="btn-restart" id="restartGame">↺ Restart</button>
+            <button class="btn-restart btn-fullscreen" id="fullscreenBtn">⛶ Fullscreen</button>
+          </div>
+        </div>
+
+        <div class="game-tabs" id="gameTabs">
+          <button class="game-tab active" data-game="tracking">
+            <span class="gt-icon">🎯</span>
+            <div class="gt-text"><span class="gt-name">Tracking</span><span class="gt-desc">Follow a moving sphere</span></div>
+          </button>
+          <button class="game-tab" data-game="flicking">
+            <span class="gt-icon">⚡</span>
+            <div class="gt-text"><span class="gt-name">Flicking</span><span class="gt-desc">Fast target acquisition</span></div>
+          </button>
+          <button class="game-tab" data-game="switching">
+            <span class="gt-icon">🔀</span>
+            <div class="gt-text"><span class="gt-name">Switching</span><span class="gt-desc">Rapid multi-target</span></div>
+          </button>
+        </div>
+
+        <div class="warmup-hud" id="warmupHUD">
+          <div class="hud-stat"><span class="hud-num" id="wScore">0</span><span class="hud-lbl" id="wScoreLbl">Score</span></div>
+          <div class="hud-stat hud-center"><span class="hud-num" id="wTimer">30</span><span class="hud-lbl">Seconds</span></div>
+          <div class="hud-stat"><span class="hud-num" id="wAccuracy">—</span><span class="hud-lbl">Accuracy</span></div>
+          <div class="hud-stat"><span class="hud-num" id="wBest">—</span><span class="hud-lbl">Best</span></div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="warmupCanvas"></canvas>
+          <div class="crosshair" id="crosshair">
+            <div class="ch-line ch-t"></div><div class="ch-line ch-b"></div>
+            <div class="ch-line ch-l"></div><div class="ch-line ch-r"></div>
+            <div class="ch-dot"></div>
+          </div>
+          <div class="hit-ring" id="hitRing"></div>
+          <div class="canvas-overlay" id="canvasOverlay">
+            <div class="overlay-inner">
+              <div class="overlay-game-badge tracking" id="overlayBadge">🎯 TRACKING</div>
+              <div class="overlay-title tracking-title" id="overlayTitle">READY?</div>
+              <div class="overlay-sub" id="overlaySub">Click Begin to lock your cursor and start the round</div>
+              <button class="btn-begin tracking-btn" id="btnStartGame">▶ Begin Warmup</button>
+            </div>
+          </div>
+          <div class="pointer-prompt" id="pointerPrompt">Click anywhere to regain cursor lock</div>
+        </div>
+
+        <div class="game-tips" id="gameTips">
+          <span class="tip-badge">💡 Tip</span>
+          <p class="tip-text" id="tipText">Keep your crosshair ahead of the target — predict its path rather than chasing it.</p>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard-wrap">
+          <div class="lb-header">
+            <div class="lb-title-row">
+              <h2 class="lb-title">🏆 Global Leaderboard</h2>
+              <div class="lb-mode-tabs">
+                <button class="lb-tab active" data-lbmode="tracking">Tracking</button>
+                <button class="lb-tab" data-lbmode="flicking">Flicking</button>
+                <button class="lb-tab" data-lbmode="switching">Switching</button>
+              </div>
+            </div>
+            <p class="lb-sub" id="lbWeekLabel">Top scores this week — resets every Monday</p>
+          </div>
+          <div class="lb-body">
+            <table class="lb-table">
+              <thead>
+                <tr>
+                  <th class="lb-rank-col">#</th>
+                  <th>Player</th>
+                  <th class="lb-score-col">Score</th>
+                  <th class="lb-diff-col">Difficulty</th>
+                  <th class="lb-date-col">Date</th>
+                </tr>
+              </thead>
+              <tbody id="lbTableBody">
+                <tr><td colspan="5" class="lb-loading">Loading scores…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Name prompt modal (shown after a round) -->
+        <div class="name-modal-bg" id="nameModalBg">
+          <div class="name-modal">
+            <div class="nm-badge" id="nmBadge">🎯 TRACKING</div>
+            <h3 class="nm-title">Round Over!</h3>
+            <p class="nm-score">Score: <strong id="nmScore">0</strong></p>
+            <p class="nm-sub">Enter your name to save to the leaderboard</p>
+            <div class="nm-auth-row" id="nmAuthRow" style="display:none">
+              <img class="nm-auth-avatar" id="nmAuthAvatar" src="" alt="">
+              <span class="nm-auth-name" id="nmAuthName"></span>
+              <button class="nm-auth-change" onclick="Auth.openModal()">Change</button>
+            </div>
+            <button class="nm-signin-link" id="nmSignInLink" onclick="Auth.openModal()">🔑 Sign in for cross-device sync</button>
+            <input type="text" id="nmNameInput" class="nm-input" placeholder="Enter your name (required)" maxlength="20" autocomplete="off">
+            <div class="nm-btns">
+              <button class="nm-btn nm-btn-submit" id="nmSubmit">Save Score</button>
+              <button class="nm-btn nm-btn-skip"   id="nmSkip">Skip</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="app-footer">
+          <div class="app-footer-inner">
+            <span>Curated by <strong>PurplsXD</strong> · Voltaic S3/S5 · Aimlabs &amp; KovaaK's</span>
+            <a href="https://github.com/atharvw11s/AimRivals-Upgraded" target="_blank" rel="noopener" class="footer-gh-link">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-1px;margin-right:5px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              github.com/atharvw11s/AimRivals-Upgraded
+            </a>
+          </div>
+        </footer>
+
+      </div>
     </section>
+
   </main>
 </div>
 
@@ -60,12 +449,44 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="../auth.js?v=18"></script>
-<script src="../scores.js?v=18"></script>
-<script src="../script.js?v=18"></script>
+<script src="../auth.js?v=19"></script>
+<script src="../scores.js?v=19"></script>
+<script src="../script.js?v=19"></script>
 
-<!-- Auth Modal (kept exactly as you had) -->
-<!-- ... (all the auth modal code is unchanged) ... -->
-
+  <!-- Auth Modal -->
+  <div class="auth-modal-bg" id="authModalBg">
+    <div class="auth-modal">
+      <button class="auth-close" id="authClose">✕</button>
+      <div id="authSignedOut">
+        <h3 class="auth-title">Sign In</h3>
+        <p class="auth-sub">Sign in to save your personal bests across all devices.</p>
+        <button class="auth-btn auth-btn-google" id="authGoogleBtn">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+        <button class="auth-btn auth-btn-github" id="authGithubBtn">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          Continue with GitHub
+        </button>
+        <div class="auth-divider"><span>or stay anonymous</span></div>
+        <p class="auth-anon">Scores are saved to this device automatically — sign in to sync across devices.</p>
+      </div>
+      <div id="authSignedIn" style="display:none">
+        <div class="auth-user-info">
+          <img class="auth-avatar" id="authAvatar" src="" alt="">
+          <div>
+            <p class="auth-username" id="authUsername"></p>
+            <p class="auth-email" id="authUserEmail"></p>
+          </div>
+        </div>
+        <div class="auth-name-row">
+          <label class="auth-name-label">Display name</label>
+          <input type="text" id="authDisplayName" class="auth-name-input" placeholder="Your name…" maxlength="20" autocomplete="off">
+        </div>
+        <p class="auth-sub" style="margin-top:8px">Your personal bests are synced across all devices.</p>
+        <button class="auth-btn auth-btn-signout" id="authSignOutBtn">Sign Out</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
