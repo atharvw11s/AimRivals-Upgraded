@@ -1,5 +1,6 @@
+<DOCUMENT filename="config.js">
 /* ================================================================
-   Zenith Aim — config.js
+   AimRivals — config.js
    ================================================================ */
 
 const AimRivalsConfig = {
@@ -41,3 +42,4 @@ const AimRivalsConfig = {
 
 if (typeof window !== 'undefined') window.AimRivalsConfig = AimRivalsConfig;
 if (typeof module !== 'undefined') module.exports = AimRivalsConfig;
+</DOCUMENT>

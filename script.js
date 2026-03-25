@@ -362,7 +362,7 @@ function showSection(target, fromPopState) {
     }
   }
 
-  const repoBase = window.location.origin + '/AimRivals-Upgraded';
+  const repoBase = window.location.origin + '/Zenith-Aim';
   const url = repoBase + '/' + target + '/';
 
   if (fromPopState) {
