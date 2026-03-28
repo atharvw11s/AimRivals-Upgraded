@@ -358,8 +358,7 @@ function showSection(target, fromPopState) {
       };
       document.head.appendChild(script);
     } else {
-      // THREE already loaded — re-init to restore canvas/listeners
-      setTimeout(() => { Warmup3D.init(); }, 60);
+      setTimeout(() => Warmup3D.resize(), 60);
     }
   }
 
@@ -912,20 +911,19 @@ const Warmup3D = (() => {
       });
     }
 
-    // Pointer lock
-    document.addEventListener('pointerlockchange', onPointerLockChange);
-    document.addEventListener('mozpointerlockchange', onPointerLockChange);
-    document.addEventListener('mousemove', onMouseMove);
-
-    // Use mousedown/mouseup for canvas — enables hold-to-fire in switching
-    canvas.addEventListener('mousedown', onCanvasMouseDown);
-    canvas.addEventListener('mouseup',   onCanvasMouseUp);
-    canvas.addEventListener('click',     onCanvasClick); // fallback for pointer-lock re-acquire
-
-    // Touch support for mobile
-    canvas.addEventListener('touchstart',  onTouchStart,  { passive: false });
-    canvas.addEventListener('touchmove',   onTouchMove,   { passive: false });
-    canvas.addEventListener('touchend',    onTouchEnd,    { passive: false });
+    // Attach event listeners only once to avoid duplicates on re-init
+    if (!Warmup3D._listenersAttached) {
+      Warmup3D._listenersAttached = true;
+      document.addEventListener('pointerlockchange', onPointerLockChange);
+      document.addEventListener('mozpointerlockchange', onPointerLockChange);
+      document.addEventListener('mousemove', onMouseMove);
+      canvas.addEventListener('mousedown', onCanvasMouseDown);
+      canvas.addEventListener('mouseup',   onCanvasMouseUp);
+      canvas.addEventListener('click',     onCanvasClick);
+      canvas.addEventListener('touchstart',  onTouchStart,  { passive: false });
+      canvas.addEventListener('touchmove',   onTouchMove,   { passive: false });
+      canvas.addEventListener('touchend',    onTouchEnd,    { passive: false });
+    }
 
     // On mobile, show touch hint instead of pointer lock prompt
     if (isMobile() && pointerPromptEl) {
@@ -1567,7 +1565,7 @@ const Warmup3D = (() => {
     overlay.classList.remove('hidden');
   }
 
-  return { init, resize, _showEndOverlay };
+  return { init, resize, _showEndOverlay, _listenersAttached: false };
 })();
 
 /* ═══════════════════════════════════════════════════════════════
