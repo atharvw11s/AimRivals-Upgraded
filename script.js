@@ -812,7 +812,6 @@ const Warmup3D = (() => {
 
     // Build Three.js renderer
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    // Init raycaster here — THREE is guaranteed loaded at this point
     raycaster = new THREE.Raycaster();
     CENTER    = new THREE.Vector2(0, 0);
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -1464,8 +1463,6 @@ const Warmup3D = (() => {
     buildScene();
 
     overlay.classList.add('hidden');
-    crosshairEl.classList.add('visible');
-    canvas.requestPointerLock();
 
     countdownInt = setInterval(() => {
       timeLeft--;
